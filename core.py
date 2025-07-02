@@ -1,7 +1,7 @@
 
 import warnings
 from enum import Enum, auto, StrEnum
-from typing import TYPE_CHECKING, cast
+from typing import cast
 
 import networkx as nx
 

@@ -1,11 +1,9 @@
 """Utilities for generating challenging Kami puzzles."""
-
-from __future__ import annotations
-
 import itertools
 from typing import Iterable, List, Tuple
 
 import networkx as nx
+from tqdm import tqdm
 
 from core import Color
 from solver import SolvablePuzzle, Move
@@ -18,7 +16,7 @@ def _all_graphs(n: int) -> Iterable[nx.Graph]:
     """Yield all simple graphs with ``n`` nodes."""
     nodes = list(range(n))
     edges = list(itertools.combinations(nodes, 2))
-    for mask in range(1 << len(edges)):
+    for mask in tqdm(range(1 << len(edges)), desc="All graphs", unit="graphs"):
         g = nx.Graph()
         g.add_nodes_from(nodes)
         for i, (u, v) in enumerate(edges):
@@ -29,7 +27,7 @@ def _all_graphs(n: int) -> Iterable[nx.Graph]:
 
 def _all_colorings(n: int, colors: List[Color]) -> Iterable[Coloring]:
     """Yield all assignments of ``colors`` to ``n`` nodes."""
-    for prod in itertools.product(colors, repeat=n):
+    for prod in tqdm(itertools.product(colors, repeat=n), desc="All colorings", unit="colorings", total=len(colors)**n, leave=False):
         yield prod
 
 
@@ -53,6 +51,8 @@ def hardest_puzzle(n: int, k: int) -> tuple[SolvablePuzzle | None, List[Move] | 
     best_solution: List[Move] | None = None
 
     for g in _all_graphs(n):
+        if not nx.is_connected(g):
+            continue
         is_planar, _ = nx.check_planarity(g)
         if not is_planar:
             continue
@@ -70,8 +70,8 @@ def hardest_puzzle(n: int, k: int) -> tuple[SolvablePuzzle | None, List[Move] | 
 if __name__ == "__main__":
     from timer import timing
 
-    N = 3
-    K = 2
+    N = 6
+    K = 3
     with timing():
         puzzle, solution = hardest_puzzle(N, K)
     print(f"Hardest {N}-node puzzle with {K} colors uses {len(solution) if solution else 'no'} moves")
