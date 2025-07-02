@@ -52,105 +52,14 @@ class SolvablePuzzle(Puzzle):
             follower=self.search_follower,
             breadth=True
         )
+        self.collapse()
         return solver.solve(self)
     
 if __name__ == '__main__':
-    from enum import Enum
+    import puzzles
 
-    class PuzzleSection(int, Enum):
-        TOP_CREAM = 0
-        TOP_TURQUOISE = 1
-        TOP_LEFT_ORANGE = 2
-        MIDDLE_DARK_BLUE = 3
-        TOP_RIGHT_ORANGE = 4
-        MIDDLE_LEFT_CREAM = 5
-        MIDDLE_RIGHT_CREAM = 6
-        BOTTOM_LEFT_ORANGE = 7
-        BOTTOM_RIGHT_ORANGE = 8
-        BOTTOM_TURQUOISE = 9
-        BOTTOM_CREAM = 10
-
-    section_to_color: dict[PuzzleSection, Color] = {
-        PuzzleSection.TOP_CREAM: Color.CREAM,
-        PuzzleSection.TOP_TURQUOISE: Color.TURQUOISE,
-        PuzzleSection.TOP_LEFT_ORANGE: Color.ORANGE,
-        PuzzleSection.MIDDLE_DARK_BLUE: Color.DARK_BLUE,
-        PuzzleSection.TOP_RIGHT_ORANGE: Color.ORANGE,
-        PuzzleSection.MIDDLE_LEFT_CREAM: Color.CREAM,
-        PuzzleSection.MIDDLE_RIGHT_CREAM: Color.CREAM,
-        PuzzleSection.BOTTOM_LEFT_ORANGE: Color.ORANGE,
-        PuzzleSection.BOTTOM_RIGHT_ORANGE: Color.ORANGE,
-        PuzzleSection.BOTTOM_TURQUOISE: Color.TURQUOISE,
-        PuzzleSection.BOTTOM_CREAM: Color.CREAM,
-    }
-
-    touching: dict[PuzzleSection, list[PuzzleSection]] = {
-        PuzzleSection.TOP_CREAM: [
-            PuzzleSection.TOP_TURQUOISE,
-            PuzzleSection.TOP_LEFT_ORANGE,
-            PuzzleSection.TOP_RIGHT_ORANGE,
-        ],
-        PuzzleSection.TOP_TURQUOISE: [
-            PuzzleSection.TOP_CREAM,
-            PuzzleSection.MIDDLE_DARK_BLUE,
-        ],
-        PuzzleSection.TOP_LEFT_ORANGE: [
-            PuzzleSection.TOP_CREAM,
-            PuzzleSection.MIDDLE_DARK_BLUE,
-            PuzzleSection.MIDDLE_LEFT_CREAM,
-        ],
-        PuzzleSection.MIDDLE_DARK_BLUE: [
-            PuzzleSection.TOP_TURQUOISE,
-            PuzzleSection.TOP_LEFT_ORANGE,
-            PuzzleSection.TOP_RIGHT_ORANGE,
-            PuzzleSection.MIDDLE_LEFT_CREAM,
-            PuzzleSection.MIDDLE_RIGHT_CREAM,
-            PuzzleSection.BOTTOM_LEFT_ORANGE,
-            PuzzleSection.BOTTOM_RIGHT_ORANGE,
-            PuzzleSection.BOTTOM_TURQUOISE,
-        ],
-        PuzzleSection.TOP_RIGHT_ORANGE: [
-            PuzzleSection.TOP_CREAM,
-            PuzzleSection.MIDDLE_DARK_BLUE,
-            PuzzleSection.MIDDLE_RIGHT_CREAM,
-        ],
-        PuzzleSection.MIDDLE_LEFT_CREAM: [
-            PuzzleSection.TOP_LEFT_ORANGE,
-            PuzzleSection.MIDDLE_DARK_BLUE,
-            PuzzleSection.BOTTOM_LEFT_ORANGE,
-        ],
-        PuzzleSection.MIDDLE_RIGHT_CREAM: [
-            PuzzleSection.TOP_RIGHT_ORANGE,
-            PuzzleSection.MIDDLE_DARK_BLUE,
-            PuzzleSection.BOTTOM_RIGHT_ORANGE,
-        ],
-        PuzzleSection.BOTTOM_LEFT_ORANGE: [
-            PuzzleSection.MIDDLE_LEFT_CREAM,
-            PuzzleSection.MIDDLE_DARK_BLUE,
-            PuzzleSection.BOTTOM_CREAM,
-        ],
-        PuzzleSection.BOTTOM_RIGHT_ORANGE: [
-            PuzzleSection.MIDDLE_RIGHT_CREAM,
-            PuzzleSection.MIDDLE_DARK_BLUE,
-            PuzzleSection.BOTTOM_CREAM,
-        ],
-        PuzzleSection.BOTTOM_TURQUOISE: [
-            PuzzleSection.MIDDLE_DARK_BLUE,
-            PuzzleSection.BOTTOM_CREAM,
-        ],
-        PuzzleSection.BOTTOM_CREAM: [
-            PuzzleSection.BOTTOM_LEFT_ORANGE,
-            PuzzleSection.BOTTOM_RIGHT_ORANGE,
-            PuzzleSection.BOTTOM_TURQUOISE,
-        ],
-    }
-
-    puzzle = SolvablePuzzle(valid_colors=set(section_to_color.values()))
-    for section, color in section_to_color.items():
-        puzzle.add_node(section, color)
-    for section, neighbors in touching.items():
-        for neighbor in neighbors:
-            puzzle.add_edge(section, neighbor)
+    puzzle = puzzles.puzzles[puzzles.PuzzleName.puzzle_3_3]
+    puzzle_section_to_name = lambda section: puzzles.Pz_3_3_Section(section).name
 
     print("Initial puzzle state:")
     puzzle.display_graph()
@@ -170,5 +79,5 @@ if __name__ == '__main__':
     else:
         for index, move in enumerate(solution):
             section_number, color = move
-            print(f"{index + 1}. Set {PuzzleSection(section_number).name} to {color.name}")
+            print(f"{index + 1}. Set {puzzle_section_to_name(section_number)} to {color.name}")
         print(f"Total moves: {len(solution)}")
