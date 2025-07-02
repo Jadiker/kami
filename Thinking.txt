@@ -10,3 +10,6 @@ I'm not sure if I want the graphs to auto-reduce yet.
 Let's build a very simple solver for the time being.
 
 Each puzzle is a graph. Each node has a number and a color.
+
+It's working, but not finding the optimal solution yet.
+Need to find out why.
