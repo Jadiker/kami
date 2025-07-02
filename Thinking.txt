@@ -55,3 +55,33 @@ I'm going to not collapse again if nothing has been modified.
 Hashing by definition collapses.
 
 I added in trackers to ensure that it doesn't accidentally do something it has already done.
+
+Searching for hardest 5-node puzzle with 5 colors...
+FUZZY=False
+All graphs:   6%|████                                                                | 61/1024 [04:14<2:35:04,  9.66s/graphs]
+
+Doesn't seem to be much faster for the non-hashing version.
+Which means that there wasn't that much re-collapsing going on without hashing.
+Going to see if it speeds it up for the hashing version.
+
+Searching for hardest 5-node puzzle with 5 colors...
+FUZZY=True
+All graphs:  22%|███████████████▎                                                     | 228/1024 [00:21<02:14,  5.91graphs/s]
+
+Um, yeah. I'd say that's a speedup.
+
+Searching for hardest 5-node puzzle with 5 colors...
+FUZZY=True
+All graphs: 100%|████████████████████████████████████████████████████████████████████| 1024/1024 [02:09<00:00,  7.90graphs/s]
+Elapsed time: 129.653509 seconds
+Hardest 5-node puzzle with 5 colors uses 3 moves
+Node 0: Color ORANGE, Neighbors [1, 2, 3, 4]
+Node 1: Color ORANGE, Neighbors [0]
+Node 2: Color DARK_BLUE, Neighbors [0]
+Node 3: Color CREAM, Neighbors [0]
+Node 4: Color TURQUOISE, Neighbors [0]
+1. Set node 0 to TURQUOISE
+2. Set node 0 to DARK_BLUE
+3. Set node 0 to CREAM
+
+Yeah, that's a lot better, wow.

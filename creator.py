@@ -77,10 +77,9 @@ def hardest_puzzle(n: int, k: int, fuzzy: bool = False) -> tuple[SolvablePuzzle 
 
 if __name__ == "__main__":
     from timer import timing
-
     N = 5
     K = 5
-    FUZZY = False
+    FUZZY = True
     assert 1 <= K <= N, f"Must have 1  <=  {K=}  <=  {N=}"
     print(f"Searching for hardest {N}-node puzzle with {K} colors...")
     print(f"{FUZZY=}")
