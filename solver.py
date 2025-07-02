@@ -50,7 +50,6 @@ class SolvablePuzzle(Puzzle):
             detector=self.search_detector,
             expander=self.search_expander,
             follower=self.search_follower,
-            breadth=True
         )
         collapsed_self = self.copy()
         collapsed_self.collapse()

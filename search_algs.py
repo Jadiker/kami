@@ -44,14 +44,12 @@ class SearchSolver(NodeSolver[GenericInfo, GenericName, GenericMove]):
         detector: Callable[[GenericInfo], bool],
         expander: Callable[[GenericInfo], Iterable[GenericMove]],
         follower: Callable[[GenericInfo, GenericMove], GenericInfo],
-        breadth: bool = True,
     ) -> None:
         super().__init__(namer, detector, expander, follower)
-        self.breadth = breadth
 
-    '''Class for solving node problems with BFS or DFS to reach the goal node'''
+    '''Class for solving node problems with BFS to reach the goal node.'''
     def solve(
-        self, start_info: GenericInfo, max_depth: Optional[int] | None = None
+        self, start_info: GenericInfo, max_depth: int | None = None
     ) -> Optional[List[GenericMove]]:
         '''
         Return the list of moves required to reach the goal node from
@@ -67,19 +65,13 @@ class SearchSolver(NodeSolver[GenericInfo, GenericName, GenericMove]):
         start_name = self.get_name(start_info)
 
         # data is in the form (info, path)
-        name_to_data: Dict[GenericName, Tuple[GenericInfo, List[GenericMove]]] = {start_name: (start_info, [])}
-        queue: Deque[GenericName] = deque()
-        if self.breadth:
-            # BFS
-            queue_append = queue.appendleft
-        else:
-            # DFS
-            queue_append = queue.append
-        queue_append(start_name)
+        name_to_data: Dict[GenericName, Tuple[GenericInfo, List[GenericMove]]] = {
+            start_name: (start_info, [])
+        }
+        queue: Deque[GenericName] = deque([start_name])
 
-        # count = 0
         while queue:
-            current_name = queue.pop()
+            current_name = queue.popleft()
             current_info, current_path = name_to_data[current_name]
 
             if max_depth is not None and len(current_path) >= max_depth:
@@ -99,7 +91,6 @@ class SearchSolver(NodeSolver[GenericInfo, GenericName, GenericMove]):
 
                 child_name = self.get_name(child_info)
                 if child_name not in name_to_data:
-                    # new, needs to be expanded
                     name_to_data[child_name] = (child_info, child_path)
-                    queue_append(child_name)
+                    queue.append(child_name)
         return None
