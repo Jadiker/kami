@@ -16,6 +16,15 @@ QuickHash = str
 # a longer hash that is unique with respect to isomorphism
 FullHash = str
 
+def embeddable(graph: nx.Graph) -> bool:
+    """Return ``True`` if ``graph`` is planar.
+
+    A graph is planar when it can be embedded in the plane without any
+    edge crossings. The check is performed using :func:`networkx.check_planarity`.
+    """
+
+    return nx.check_planarity(graph)[0]
+
 class WarningActionKind(StrEnum):
     IGNORE = "ignore"
 
