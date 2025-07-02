@@ -56,7 +56,6 @@ class SolvablePuzzle(Puzzle):
     
 if __name__ == '__main__':
     from enum import Enum
-    puzzle = SolvablePuzzle(valid_colors={Color.TURQUOISE, Color.CREAM, Color.ORANGE, Color.DARK_BLUE})
 
     class PuzzleSection(int, Enum):
         TOP_CREAM = 0
@@ -85,9 +84,6 @@ if __name__ == '__main__':
         PuzzleSection.BOTTOM_CREAM: Color.CREAM,
     }
 
-    for section, color in section_to_color.items():
-        puzzle.add_node(section, color)
-        
     touching: dict[PuzzleSection, list[PuzzleSection]] = {
         PuzzleSection.TOP_CREAM: [
             PuzzleSection.TOP_TURQUOISE,
@@ -149,6 +145,9 @@ if __name__ == '__main__':
         ],
     }
 
+    puzzle = SolvablePuzzle(valid_colors=set(section_to_color.values()))
+    for section, color in section_to_color.items():
+        puzzle.add_node(section, color)
     for section, neighbors in touching.items():
         for neighbor in neighbors:
             puzzle.add_edge(section, neighbor)
@@ -164,7 +163,8 @@ if __name__ == '__main__':
     with timing(times):
         solution = puzzle.solve()
 
-    print(f"Solution found in {times[-1]} seconds:")
+    solve_time = times.pop()
+    print(f"Solution found in {solve_time} seconds:")
     if solution is None:
         print("No solution found.")
     else:
