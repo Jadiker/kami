@@ -39,22 +39,27 @@ class NodeSolver(Generic[GenericInfo, GenericName, GenericMove]):
 
 class SearchSolver(NodeSolver[GenericInfo, GenericName, GenericMove]):
     def __init__(
-            self,
-            namer:    Callable[[GenericInfo], GenericName],
-            detector: Callable[[GenericInfo], bool],
-            expander: Callable[[GenericInfo], Iterable[GenericMove]],
-            follower: Callable[[GenericInfo, GenericMove], GenericInfo],
-            breadth:  bool=True
-        ):
+        self,
+        namer: Callable[[GenericInfo], GenericName],
+        detector: Callable[[GenericInfo], bool],
+        expander: Callable[[GenericInfo], Iterable[GenericMove]],
+        follower: Callable[[GenericInfo, GenericMove], GenericInfo],
+        breadth: bool = True,
+    ) -> None:
         super().__init__(namer, detector, expander, follower)
         self.breadth = breadth
 
     '''Class for solving node problems with BFS or DFS to reach the goal node'''
-    def solve(self, start_info: GenericInfo) -> Optional[List[GenericMove]]:
+    def solve(
+        self, start_info: GenericInfo, max_depth: Optional[int] | None = None
+    ) -> Optional[List[GenericMove]]:
         '''
-        Returns the list of moves needed to reach the goal node
-        ...from the node represented by the parameter.
-        Uses BFS or DFS to go through the node tree
+        Return the list of moves required to reach the goal node from
+        ``start_info``.
+
+        When ``max_depth`` is provided, the search stops expanding paths
+        longer than this value and returns ``None`` if no solution is found
+        within the limit.
         '''
         if self.is_goal(start_info):
             return []
@@ -77,14 +82,20 @@ class SearchSolver(NodeSolver[GenericInfo, GenericName, GenericMove]):
             current_name = queue.pop()
             current_info, current_path = name_to_data[current_name]
 
+            if max_depth is not None and len(current_path) >= max_depth:
+                # Can't expand this node further
+                continue
+
             expanded_moves = self.get_moves(current_info)
             for move in expanded_moves:
                 child_info = self.follow_move(current_info, move)
-                child_path = current_path[:]
-                child_path.append(move)
+                child_path = current_path + [move]
 
                 if self.is_goal(child_info):
                     return child_path
+
+                if max_depth is not None and len(child_path) >= max_depth:
+                    continue
 
                 child_name = self.get_name(child_info)
                 if child_name not in name_to_data:
