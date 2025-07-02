@@ -39,22 +39,25 @@ class NodeSolver(Generic[GenericInfo, GenericName, GenericMove]):
 
 class SearchSolver(NodeSolver[GenericInfo, GenericName, GenericMove]):
     def __init__(
-            self,
-            namer:    Callable[[GenericInfo], GenericName],
-            detector: Callable[[GenericInfo], bool],
-            expander: Callable[[GenericInfo], Iterable[GenericMove]],
-            follower: Callable[[GenericInfo, GenericMove], GenericInfo],
-            breadth:  bool=True
-        ):
+        self,
+        namer: Callable[[GenericInfo], GenericName],
+        detector: Callable[[GenericInfo], bool],
+        expander: Callable[[GenericInfo], Iterable[GenericMove]],
+        follower: Callable[[GenericInfo, GenericMove], GenericInfo],
+    ) -> None:
         super().__init__(namer, detector, expander, follower)
-        self.breadth = breadth
 
-    '''Class for solving node problems with BFS or DFS to reach the goal node'''
-    def solve(self, start_info: GenericInfo) -> Optional[List[GenericMove]]:
+    '''Class for solving node problems with BFS to reach the goal node.'''
+    def solve(
+        self, start_info: GenericInfo, max_depth: int | None = None
+    ) -> Optional[List[GenericMove]]:
         '''
-        Returns the list of moves needed to reach the goal node
-        ...from the node represented by the parameter.
-        Uses BFS or DFS to go through the node tree
+        Return the list of moves required to reach the goal node from
+        ``start_info``.
+
+        When ``max_depth`` is provided, the search stops expanding paths
+        longer than this value and returns ``None`` if no solution is found
+        within the limit.
         '''
         if self.is_goal(start_info):
             return []
@@ -62,33 +65,32 @@ class SearchSolver(NodeSolver[GenericInfo, GenericName, GenericMove]):
         start_name = self.get_name(start_info)
 
         # data is in the form (info, path)
-        name_to_data: Dict[GenericName, Tuple[GenericInfo, List[GenericMove]]] = {start_name: (start_info, [])}
-        queue: Deque[GenericName] = deque()
-        if self.breadth:
-            # BFS
-            queue_append = queue.appendleft
-        else:
-            # DFS
-            queue_append = queue.append
-        queue_append(start_name)
+        name_to_data: Dict[GenericName, Tuple[GenericInfo, List[GenericMove]]] = {
+            start_name: (start_info, [])
+        }
+        queue: Deque[GenericName] = deque([start_name])
 
-        # count = 0
         while queue:
-            current_name = queue.pop()
+            current_name = queue.popleft()
             current_info, current_path = name_to_data[current_name]
+
+            if max_depth is not None and len(current_path) >= max_depth:
+                # Can't expand this node further
+                continue
 
             expanded_moves = self.get_moves(current_info)
             for move in expanded_moves:
                 child_info = self.follow_move(current_info, move)
-                child_path = current_path[:]
-                child_path.append(move)
+                child_path = current_path + [move]
 
                 if self.is_goal(child_info):
                     return child_path
 
+                if max_depth is not None and len(child_path) >= max_depth:
+                    continue
+
                 child_name = self.get_name(child_info)
                 if child_name not in name_to_data:
-                    # new, needs to be expanded
                     name_to_data[child_name] = (child_info, child_path)
-                    queue_append(child_name)
+                    queue.append(child_name)
         return None
