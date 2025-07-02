@@ -46,16 +46,11 @@ class HashTracker:
         '''Take a quick hash and the index of the puzzle in the list corresponding to that hash and return the full hash.'''
         return f'{hash}_{index}'
 
-    def go(self, puzzle: "Puzzle") -> FullHash:
+    def full_hash(self, puzzle: "Puzzle") -> FullHash:
         '''
         Add the puzzle to the tracker and return its full hash.
         '''
-        puzzle = puzzle.copy()
-        puzzle.collapse()
-        iso_graph = puzzle.to_colored_digraph()
-        with warnings.catch_warnings():
-            warnings.simplefilter(cast("warnings._ActionKind", WarningActionKind.IGNORE), category=UserWarning)
-            quick_hash: QuickHash = nx.weisfeiler_lehman_graph_hash(iso_graph)
+        quick_hash, iso_graph = self.quick_hash(puzzle)
         if quick_hash not in self.hashes:
             self.hashes[quick_hash] = [iso_graph]
             return self._merge(quick_hash, 0)
@@ -66,6 +61,17 @@ class HashTracker:
             # not isomorphic to any existing graph with this quick hash
             self.hashes[quick_hash].append(iso_graph)
             return self._merge(quick_hash, len(self.hashes[quick_hash]) - 1)
+        
+    @staticmethod
+    def quick_hash(puzzle: "Puzzle") -> tuple[QuickHash, IsomorphicPuzzleGraph]:
+        """Return a quick (not collision-free) hash and its associated isomorphic graph for the given puzzle."""
+        puzzle = puzzle.copy()
+        puzzle.collapse()
+        iso_graph = puzzle.to_colored_digraph()
+        with warnings.catch_warnings():
+            warnings.simplefilter(cast("warnings._ActionKind", WarningActionKind.IGNORE), category=UserWarning)
+            quick_hash: QuickHash = nx.weisfeiler_lehman_graph_hash(iso_graph)
+        return quick_hash, iso_graph
 
 
 class Puzzle:
@@ -85,7 +91,7 @@ class Puzzle:
     @property
     def full_hash(self) -> FullHash:
         if self.modified:
-            self._full_hash = self.hasher.go(self)
+            self._full_hash = self.hasher.full_hash(self)
             self.modified = False
         return self._full_hash
     

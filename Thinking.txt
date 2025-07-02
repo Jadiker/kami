@@ -13,3 +13,34 @@ Each puzzle is a graph. Each node has a number and a color.
 
 It's working, but not finding the optimal solution yet.
 Need to find out why.
+
+With fuzzy:
+All graphs: 100%|██████████████████████████████████████████████████████████████████| 32768/32768 [17:31<00:00, 31.18graphs/s]
+Elapsed time: 1067.092232 seconds
+Hardest 6-node puzzle with 2 colors uses 3 moves
+Node 0: Color ORANGE, Neighbors [3, 5]
+Node 1: Color DARK_BLUE, Neighbors [2, 4]
+Node 2: Color ORANGE, Neighbors [1, 3]
+Node 3: Color DARK_BLUE, Neighbors [0, 2]
+Node 4: Color ORANGE, Neighbors [1]
+Node 5: Color DARK_BLUE, Neighbors [0]
+1. Set node 0 to DARK_BLUE
+2. Set node 0 to ORANGE
+3. Set node 1 to ORANGE
+
+Without fuzzy:
+All graphs: 100%|██████████████████████████████████████████████████████████████████| 32768/32768 [12:05<00:00, 45.14graphs/s] 
+Elapsed time: 725.972283 seconds
+Hardest 6-node puzzle with 2 colors uses 3 moves
+Node 0: Color ORANGE, Neighbors [3, 5]
+Node 1: Color DARK_BLUE, Neighbors [2, 4]
+Node 2: Color ORANGE, Neighbors [1, 3]
+Node 3: Color DARK_BLUE, Neighbors [0, 2]
+Node 4: Color ORANGE, Neighbors [1]
+Node 5: Color DARK_BLUE, Neighbors [0]
+1. Set node 0 to DARK_BLUE
+2. Set node 0 to ORANGE
+3. Set node 1 to ORANGE
+
+So hashing actually makes it slower because the hashing process is so slow.
+That's super ironic.

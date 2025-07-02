@@ -6,7 +6,7 @@ import networkx as nx
 from tqdm import tqdm
 
 from core import Color
-from solver import SolvablePuzzle, Move
+from solver import SolvablePuzzle, Move, HashTracker
 
 
 Coloring = Tuple[Color, ...]
@@ -40,8 +40,12 @@ def _puzzle_from_graph_and_colors(g: nx.Graph, coloring: Coloring, valid_colors:
     return puzzle
 
 
-def hardest_puzzle(n: int, k: int) -> tuple[SolvablePuzzle | None, List[Move] | None]:
-    """Return the planar puzzle needing the most moves for ``n`` nodes and ``k`` colors."""
+def hardest_puzzle(n: int, k: int, fuzzy: bool = False) -> tuple[SolvablePuzzle | None, List[Move] | None]:
+    """
+    Return the planar puzzle needing the most moves for ``n`` nodes and ``k`` colors.
+    If ``fuzzy`` is ``True``, use quick hash to avoid duplicate puzzles.
+    (This may miss some puzzles.)
+    """
     if k > len(Color):
         raise ValueError(f"k must be \u2264 {len(Color)}")
 
@@ -49,6 +53,7 @@ def hardest_puzzle(n: int, k: int) -> tuple[SolvablePuzzle | None, List[Move] | 
     max_moves = -1
     best_puzzle: SolvablePuzzle | None = None
     best_solution: List[Move] | None = None
+    seen = set()
 
     for g in _all_graphs(n):
         if not nx.is_connected(g):
@@ -58,6 +63,11 @@ def hardest_puzzle(n: int, k: int) -> tuple[SolvablePuzzle | None, List[Move] | 
             continue
         for coloring in _all_colorings(n, colors):
             puzzle = _puzzle_from_graph_and_colors(g, coloring, colors)
+            if fuzzy:
+                quick_hash = HashTracker.quick_hash(puzzle)
+                if quick_hash in seen:
+                    continue
+                seen.add(quick_hash)
             solution = puzzle.solve()
             if solution is not None and len(solution) > max_moves:
                 max_moves = len(solution)
@@ -71,9 +81,9 @@ if __name__ == "__main__":
     from timer import timing
 
     N = 6
-    K = 3
+    K = 2
     with timing():
-        puzzle, solution = hardest_puzzle(N, K)
+        puzzle, solution = hardest_puzzle(N, K, fuzzy=True)
     print(f"Hardest {N}-node puzzle with {K} colors uses {len(solution) if solution else 'no'} moves")
     if puzzle is not None and solution is not None:
         puzzle.display_graph()
