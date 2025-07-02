@@ -1,7 +1,8 @@
 from dataclasses import dataclass
 from enum import StrEnum, Enum
 
-from core import Color, NodeID
+from core import NodeID
+from color import InfiniteColor
 from solver import SolvablePuzzle
 
 class PuzzleName(StrEnum):
@@ -9,7 +10,7 @@ class PuzzleName(StrEnum):
 
 puzzles: dict[PuzzleName, SolvablePuzzle] = {}
 
-def add_puzzle(name, section_to_color: dict[NodeID, Color], touching: dict[NodeID, list[NodeID]]):
+def add_puzzle(name, section_to_color: dict[NodeID, InfiniteColor], touching: dict[NodeID, list[NodeID]]):
     global puzzles
     puzzle = SolvablePuzzle(valid_colors=set(section_to_color.values()))
     for section, color in section_to_color.items():
@@ -32,18 +33,18 @@ class Pz_3_3_Section(NodeID, Enum):
         BOTTOM_TURQUOISE = 9
         BOTTOM_CREAM = 10
 
-section_to_color: dict[NodeID, Color] = {
-    Pz_3_3_Section.TOP_CREAM: Color.CREAM,
-    Pz_3_3_Section.TOP_TURQUOISE: Color.TURQUOISE,
-    Pz_3_3_Section.TOP_LEFT_ORANGE: Color.ORANGE,
-    Pz_3_3_Section.MIDDLE_DARK_BLUE: Color.DARK_BLUE,
-    Pz_3_3_Section.TOP_RIGHT_ORANGE: Color.ORANGE,
-    Pz_3_3_Section.MIDDLE_LEFT_CREAM: Color.CREAM,
-    Pz_3_3_Section.MIDDLE_RIGHT_CREAM: Color.CREAM,
-    Pz_3_3_Section.BOTTOM_LEFT_ORANGE: Color.ORANGE,
-    Pz_3_3_Section.BOTTOM_RIGHT_ORANGE: Color.ORANGE,
-    Pz_3_3_Section.BOTTOM_TURQUOISE: Color.TURQUOISE,
-    Pz_3_3_Section.BOTTOM_CREAM: Color.CREAM,
+section_to_color: dict[NodeID, InfiniteColor] = {
+    Pz_3_3_Section.TOP_CREAM: InfiniteColor.CREAM,
+    Pz_3_3_Section.TOP_TURQUOISE: InfiniteColor.TURQUOISE,
+    Pz_3_3_Section.TOP_LEFT_ORANGE: InfiniteColor.ORANGE,
+    Pz_3_3_Section.MIDDLE_DARK_BLUE: InfiniteColor.DARK_BLUE,
+    Pz_3_3_Section.TOP_RIGHT_ORANGE: InfiniteColor.ORANGE,
+    Pz_3_3_Section.MIDDLE_LEFT_CREAM: InfiniteColor.CREAM,
+    Pz_3_3_Section.MIDDLE_RIGHT_CREAM: InfiniteColor.CREAM,
+    Pz_3_3_Section.BOTTOM_LEFT_ORANGE: InfiniteColor.ORANGE,
+    Pz_3_3_Section.BOTTOM_RIGHT_ORANGE: InfiniteColor.ORANGE,
+    Pz_3_3_Section.BOTTOM_TURQUOISE: InfiniteColor.TURQUOISE,
+    Pz_3_3_Section.BOTTOM_CREAM: InfiniteColor.CREAM,
 }
 
 touching: dict[NodeID, list[NodeID]] = {
