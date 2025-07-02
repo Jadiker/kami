@@ -117,42 +117,52 @@ class Puzzle:
         return len(colors) == 1
     
     # Doesn't modify the full hash because the graph structure doesn't change
-    def collapse(self, node_id: NodeID | None = None):
-        '''
-        Collapse the graph by merging nodes of the same color that are connected into a single node.
+    def collapse(self, node_id: NodeID | None = None) -> None:
+        """Merge connected components of identical color into single nodes.
 
-        If given a node, collapse only that node and its same color neighbors.
-        Otherwise, collapse all nodes in the graph.
-        '''
+        When ``node_id`` is provided only the component containing that node is
+        collapsed.  Otherwise all components in the puzzle are collapsed.
+        """
+
+        def _component(start: NodeID) -> set[NodeID]:
+            color = self.get_color(start)
+            stack = [start]
+            comp = set()
+            while stack:
+                current = stack.pop()
+                if current in comp:
+                    continue
+                if self.get_color(current) != color:
+                    continue
+                comp.add(current)
+                stack.extend(self.get_neighbors(current))
+            return comp
+
+        def _collapse(start: NodeID, comp: set[NodeID]) -> None:
+            color = self.get_color(start)
+            new_neighbors = {
+                neigh
+                for node in comp
+                for neigh in self.get_neighbors(node)
+                if neigh not in comp
+            }
+            for node in comp:
+                self.graph.remove_node(node)
+            self.graph.add_node(start, **{NodeAttributeName.COLOR: color})
+            for neigh in new_neighbors:
+                self.graph.add_edge(start, neigh)
+
         if node_id is not None:
-            color = self.get_color(node_id)
-            same_color_neighbors = self.get_same_color_neighbors(node_id)
-            nodes_to_merge = [node_id] + same_color_neighbors
-            # the neighbors of the collapsed node
-            new_neighbors = set(
-                [
-                    neighbor
-                    for cluster_node in nodes_to_merge
-                    for neighbor in self.get_neighbors(cluster_node)
-                    if self.get_color(neighbor) != color
-                ]
-            )
-            # remove all the nodes to be merged
-            for n in nodes_to_merge:
-                self.graph.remove_node(n)
-            # add the new node
-            self.graph.add_node(node_id, **{NodeAttributeName.COLOR: color})
-            # add the edges to the new node
-            for neighbor in new_neighbors:
-                self.graph.add_edge(node_id, neighbor)
+            comp = _component(node_id)
+            _collapse(node_id, comp)
         else:
-            visited = set()
-            unvisited = self.graph.nodes - visited
-            while unvisited:
-                next_visit = next(iter(unvisited))
-                self.collapse(next_visit)
-                visited.add(next_visit)
-                unvisited = self.graph.nodes - visited
+            visited: set[NodeID] = set()
+            for node in list(self.graph.nodes):
+                if node in visited or node not in self.graph.nodes:
+                    continue
+                comp = _component(node)
+                visited.update(comp)
+                _collapse(node, comp)
 
     def to_colored_digraph(self: "Puzzle") -> IsomorphicPuzzleGraph:
         """
