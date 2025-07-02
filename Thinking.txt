@@ -44,3 +44,14 @@ Node 5: Color DARK_BLUE, Neighbors [0]
 
 So hashing actually makes it slower because the hashing process is so slow.
 That's super ironic.
+
+It's estimating 1.5-2h with fuzzy for N=5, K=5.
+How about without fuzzy?
+Looks like similar timing.
+
+
+I have a hunch that it's all the collapsing that's taking forever.
+I'm going to not collapse again if nothing has been modified.
+Hashing by definition collapses.
+
+I added in trackers to ensure that it doesn't accidentally do something it has already done.

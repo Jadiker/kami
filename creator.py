@@ -62,7 +62,7 @@ def hardest_puzzle(n: int, k: int, fuzzy: bool = False) -> tuple[SolvablePuzzle 
         for coloring in _all_colorings(n, colors):
             puzzle = _puzzle_from_graph_and_colors(g, coloring, colors)
             if fuzzy:
-                quick_hash = HashTracker.quick_hash(puzzle)
+                quick_hash = puzzle.quick_hash
                 if quick_hash in seen:
                     continue
                 seen.add(quick_hash)
@@ -80,9 +80,12 @@ if __name__ == "__main__":
 
     N = 5
     K = 5
+    FUZZY = False
     assert 1 <= K <= N, f"Must have 1  <=  {K=}  <=  {N=}"
+    print(f"Searching for hardest {N}-node puzzle with {K} colors...")
+    print(f"{FUZZY=}")
     with timing():
-        puzzle, solution = hardest_puzzle(N, K, fuzzy=True)
+        puzzle, solution = hardest_puzzle(N, K, fuzzy=FUZZY)
     print(f"Hardest {N}-node puzzle with {K} colors uses {len(solution) if solution else 'no'} moves")
     if puzzle is not None and solution is not None:
         puzzle.display_graph()

@@ -45,7 +45,7 @@ class HashTracker:
         '''
         Add the puzzle to the tracker and return its full hash.
         '''
-        quick_hash, iso_graph = self.quick_hash(puzzle)
+        quick_hash, iso_graph = puzzle.quick_hash, puzzle.iso_graph
         if quick_hash not in self.hashes:
             self.hashes[quick_hash] = [iso_graph]
             return self._merge(quick_hash, 0)
@@ -71,9 +71,18 @@ class HashTracker:
 
 class Puzzle:
     @staticmethod
-    def modifies(method):
+    def set_recalc_full_hash(method):
         def wrapper(self, *args, **kwargs):
-            self.modified = True
+            self.recalc_full_hash = True
+            return method(self, *args, **kwargs)
+        return wrapper
+    
+    @staticmethod
+    def redo_all(method):
+        def wrapper(self, *args, **kwargs):
+            self.recalc_full_hash = True
+            self.recalc_quick_hash = True
+            self.not_collapsed = True
             return method(self, *args, **kwargs)
         return wrapper
     
@@ -81,27 +90,58 @@ class Puzzle:
         self.graph = nx.Graph()
         self.hasher = hasher if hasher is not None else HashTracker()
         # whether the puzzle has been modified since last hash computation
-        self.modified = True
+        self.recalc_full_hash = True
+        self.recalc_quick_hash = True
+        self.not_collapsed = True
+        self._full_hash: FullHash | None = None
+        self._quick_hash: QuickHash | None = None
+        self._iso_graph: IsomorphicPuzzleGraph | None = None
 
     @property
     def full_hash(self) -> FullHash:
-        if self.modified:
+        if self.recalc_full_hash:
             self._full_hash = self.hasher.full_hash(self)
-            self.modified = False
+            self.recalc_full_hash = False
+
+        assert self._full_hash is not None
         return self._full_hash
     
+    @property
+    def quick_hash(self) -> QuickHash:
+        if self.recalc_quick_hash:
+            self._quick_hash, self._iso_graph = self.hasher.quick_hash(self)
+            self.recalc_quick_hash = False
+        assert self._quick_hash is not None
+        return self._quick_hash
+    
+    @property
+    def iso_graph(self) -> IsomorphicPuzzleGraph:
+        if self.recalc_full_hash:
+            self._quick_hash, self._iso_graph = self.hasher.quick_hash(self)
+            self.recalc_quick_hash = False
+        assert self._iso_graph is not None
+        return self._iso_graph
+    
     # doesn't modify the structure, but may modify the final hash
-    @modifies
+    @set_recalc_full_hash
     def set_hasher(self, hasher: HashTracker):
         self.hasher = hasher
     
-    @modifies
+    @redo_all
     def add_node(self, node_id: NodeID, color: InfiniteColor):
         self.graph.add_node(node_id, **{NodeAttributeName.COLOR: color})
     
-    @modifies
+    @redo_all
     def add_edge(self, node1: NodeID, node2: NodeID):
         self.graph.add_edge(node1, node2)
+
+    @redo_all
+    def set_color(self, node_id: NodeID, color: InfiniteColor, propagate: bool = True):
+        if propagate:
+            same_color_neighbors = self.get_same_color_neighbors(node_id)
+            for neighbor in same_color_neighbors:
+                self.set_color(neighbor, color, propagate=False)
+        self.graph.nodes[node_id][NodeAttributeName.COLOR] = color
     
     def get_color(self, node_id: NodeID) -> InfiniteColor:
         return self.graph.nodes[node_id][NodeAttributeName.COLOR]
@@ -112,14 +152,6 @@ class Puzzle:
     def get_same_color_neighbors(self, node_id: NodeID):
         color = self.get_color(node_id)
         return [n for n in self.get_neighbors(node_id) if self.get_color(n) == color]
-
-    @modifies
-    def set_color(self, node_id: NodeID, color: InfiniteColor, propagate: bool = True):
-        if propagate:
-            same_color_neighbors = self.get_same_color_neighbors(node_id)
-            for neighbor in same_color_neighbors:
-                self.set_color(neighbor, color, propagate=False)
-        self.graph.nodes[node_id][NodeAttributeName.COLOR] = color
 
     @property
     def is_solved(self) -> bool:
@@ -133,7 +165,10 @@ class Puzzle:
         When ``node_id`` is provided only the component containing that node is
         collapsed. Otherwise all components in the puzzle are collapsed.
         """
-
+        if not self.not_collapsed:
+            # No need to collapse again if nothing has changed
+            return
+        
         def _component(start: NodeID) -> set[NodeID]:
             '''Return the set of nodes in the connected component of the same color as start.'''
             color = self.get_color(start)
@@ -168,6 +203,7 @@ class Puzzle:
         if node_id is not None:
             comp = _component(node_id)
             _collapse(node_id, comp)
+            # could still be uncollapsed at this point
         else:
             visited: set[NodeID] = set()
             for node in list(self.graph.nodes):
@@ -176,6 +212,9 @@ class Puzzle:
                 comp = _component(node)
                 visited.update(comp)
                 _collapse(node, comp)
+            # all components collapsed
+            self.not_collapsed = False
+
 
     def to_colored_digraph(self: "Puzzle") -> IsomorphicPuzzleGraph:
         """
