@@ -1,0 +1,12 @@
+# 7/2/2025
+Goal is to make something that can solve and/or create Kami puzzles. (The iOS game.)
+
+It's clear that the puzzles are topological / color based.
+
+Essentially every stage is a graph of what colors touch what, and you can fill with colors.
+
+I'm not sure if I want the graphs to auto-reduce yet.
+
+Let's build a very simple solver for the time being.
+
+Each puzzle is a graph. Each node has a number and a color.
