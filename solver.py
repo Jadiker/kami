@@ -52,8 +52,9 @@ class SolvablePuzzle(Puzzle):
             follower=self.search_follower,
             breadth=True
         )
-        self.collapse()
-        return solver.solve(self)
+        collapsed_self = self.copy()
+        collapsed_self.collapse()
+        return solver.solve(collapsed_self)
     
 if __name__ == '__main__':
     import puzzles
