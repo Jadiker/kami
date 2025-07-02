@@ -121,12 +121,14 @@ class Puzzle:
         """Merge connected components of identical color into single nodes.
 
         When ``node_id`` is provided only the component containing that node is
-        collapsed.  Otherwise all components in the puzzle are collapsed.
+        collapsed. Otherwise all components in the puzzle are collapsed.
         """
 
         def _component(start: NodeID) -> set[NodeID]:
+            '''Return the set of nodes in the connected component of the same color as start.'''
             color = self.get_color(start)
             stack = [start]
+            # short for "component"
             comp = set()
             while stack:
                 current = stack.pop()
@@ -139,18 +141,19 @@ class Puzzle:
             return comp
 
         def _collapse(start: NodeID, comp: set[NodeID]) -> None:
+            '''Collapse the component ``comp`` into a single node with ID ``start``.'''
             color = self.get_color(start)
             new_neighbors = {
-                neigh
+                neighbor
                 for node in comp
-                for neigh in self.get_neighbors(node)
-                if neigh not in comp
+                for neighbor in self.get_neighbors(node)
+                if neighbor not in comp
             }
             for node in comp:
                 self.graph.remove_node(node)
             self.graph.add_node(start, **{NodeAttributeName.COLOR: color})
-            for neigh in new_neighbors:
-                self.graph.add_edge(start, neigh)
+            for neighbor in new_neighbors:
+                self.graph.add_edge(start, neighbor)
 
         if node_id is not None:
             comp = _component(node_id)
