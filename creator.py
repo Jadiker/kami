@@ -66,7 +66,15 @@ def hardest_puzzle(n: int, k: int, fuzzy: bool = False) -> tuple[SolvablePuzzle 
                 if quick_hash in seen:
                     continue
                 seen.add(quick_hash)
-            solution = puzzle.solve()
+
+            depth_limit = None if max_moves < 0 else max_moves
+            solution = puzzle.solve(max_depth=depth_limit)
+
+            if solution is None:
+                # Either unsolved within the current bound or unsolvable.
+                # Run an unlimited search only when it might improve max_moves.
+                solution = puzzle.solve()
+
             if solution is not None and len(solution) > max_moves:
                 max_moves = len(solution)
                 best_puzzle = puzzle
