@@ -4,6 +4,7 @@ from enum import Enum, auto, StrEnum
 from typing import cast
 
 import networkx as nx
+from color import InfiniteColor
 
 # graph representation of a puzzle that is unique up to isomorphism
 IsomorphicPuzzleGraph = nx.DiGraph
@@ -27,12 +28,6 @@ def embeddable(graph: nx.Graph) -> bool:
 
 class WarningActionKind(StrEnum):
     IGNORE = "ignore"
-
-class Color(Enum):
-    ORANGE = auto()
-    DARK_BLUE = auto()
-    CREAM = auto()
-    TURQUOISE = auto()
 
 class NodeAttributeName(StrEnum):
     COLOR = 'color'
@@ -101,14 +96,14 @@ class Puzzle:
         self.hasher = hasher
     
     @modifies
-    def add_node(self, node_id: NodeID, color: Color):
+    def add_node(self, node_id: NodeID, color: InfiniteColor):
         self.graph.add_node(node_id, **{NodeAttributeName.COLOR: color})
     
     @modifies
     def add_edge(self, node1: NodeID, node2: NodeID):
         self.graph.add_edge(node1, node2)
     
-    def get_color(self, node_id: NodeID) -> Color:
+    def get_color(self, node_id: NodeID) -> InfiniteColor:
         return self.graph.nodes[node_id][NodeAttributeName.COLOR]
     
     def get_neighbors(self, node_id: NodeID):
@@ -119,7 +114,7 @@ class Puzzle:
         return [n for n in self.get_neighbors(node_id) if self.get_color(n) == color]
 
     @modifies
-    def set_color(self, node_id: NodeID, color: Color, propagate: bool = True):
+    def set_color(self, node_id: NodeID, color: InfiniteColor, propagate: bool = True):
         if propagate:
             same_color_neighbors = self.get_same_color_neighbors(node_id)
             for neighbor in same_color_neighbors:
@@ -234,11 +229,11 @@ class Puzzle:
 def demo():
     hasher = HashTracker()
     puzzle1 = Puzzle(hasher)
-    puzzle1.add_node(1, Color.ORANGE)
-    puzzle1.add_node(2, Color.ORANGE)
-    puzzle1.add_node(3, Color.DARK_BLUE)
-    puzzle1.add_node(4, Color.CREAM)
-    puzzle1.add_node(5, Color.CREAM)
+    puzzle1.add_node(1, InfiniteColor.ORANGE)
+    puzzle1.add_node(2, InfiniteColor.ORANGE)
+    puzzle1.add_node(3, InfiniteColor.DARK_BLUE)
+    puzzle1.add_node(4, InfiniteColor.CREAM)
+    puzzle1.add_node(5, InfiniteColor.CREAM)
     puzzle1.add_edge(1, 2)
     puzzle1.add_edge(2, 3)
     puzzle1.add_edge(3, 4)
@@ -247,11 +242,11 @@ def demo():
     puzzle1.display_graph()
 
     puzzle2 = Puzzle(hasher)
-    puzzle2.add_node(10, Color.CREAM)
-    puzzle2.add_node(20, Color.CREAM)
-    puzzle2.add_node(30, Color.TURQUOISE)
-    puzzle2.add_node(80, Color.ORANGE)
-    puzzle2.add_node(70, Color.ORANGE)
+    puzzle2.add_node(10, InfiniteColor.CREAM)
+    puzzle2.add_node(20, InfiniteColor.CREAM)
+    puzzle2.add_node(30, InfiniteColor.TURQUOISE)
+    puzzle2.add_node(80, InfiniteColor.ORANGE)
+    puzzle2.add_node(70, InfiniteColor.ORANGE)
     puzzle2.add_edge(10, 20)
     puzzle2.add_edge(20, 30)
     puzzle2.add_edge(30, 80)

@@ -5,11 +5,11 @@ from typing import Iterable, List, Tuple
 import networkx as nx
 from tqdm import tqdm
 
-from core import Color
+from color import InfiniteColor
 from solver import SolvablePuzzle, Move, HashTracker
 
 
-Coloring = Tuple[Color, ...]
+Coloring = Tuple[InfiniteColor, ...]
 
 
 def _all_graphs(n: int) -> Iterable[nx.Graph]:
@@ -25,13 +25,13 @@ def _all_graphs(n: int) -> Iterable[nx.Graph]:
         yield g
 
 
-def _all_colorings(n: int, colors: List[Color]) -> Iterable[Coloring]:
+def _all_colorings(n: int, colors: List[InfiniteColor]) -> Iterable[Coloring]:
     """Yield all assignments of ``colors`` to ``n`` nodes."""
     for prod in tqdm(itertools.product(colors, repeat=n), desc="All colorings", unit="colorings", total=len(colors)**n, leave=False):
         yield prod
 
 
-def _puzzle_from_graph_and_colors(g: nx.Graph, coloring: Coloring, valid_colors: List[Color]) -> SolvablePuzzle:
+def _puzzle_from_graph_and_colors(g: nx.Graph, coloring: Coloring, valid_colors: List[InfiniteColor]) -> SolvablePuzzle:
     puzzle = SolvablePuzzle(valid_colors=set(valid_colors))
     for node, color in enumerate(coloring):
         puzzle.add_node(node, color)
@@ -46,10 +46,8 @@ def hardest_puzzle(n: int, k: int, fuzzy: bool = False) -> tuple[SolvablePuzzle 
     If ``fuzzy`` is ``True``, use quick hash to avoid duplicate puzzles.
     (This may miss some puzzles.)
     """
-    if k > len(Color):
-        raise ValueError(f"k must be \u2264 {len(Color)}")
 
-    colors = list(Color)[:k]
+    colors = list(InfiniteColor)[:k]
     max_moves = -1
     best_puzzle: SolvablePuzzle | None = None
     best_solution: List[Move] | None = None
@@ -80,8 +78,9 @@ def hardest_puzzle(n: int, k: int, fuzzy: bool = False) -> tuple[SolvablePuzzle 
 if __name__ == "__main__":
     from timer import timing
 
-    N = 6
-    K = 2
+    N = 5
+    K = 5
+    assert 1 <= K <= N, f"Must have 1  <=  {K=}  <=  {N=}"
     with timing():
         puzzle, solution = hardest_puzzle(N, K, fuzzy=True)
     print(f"Hardest {N}-node puzzle with {K} colors uses {len(solution) if solution else 'no'} moves")

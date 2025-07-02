@@ -1,14 +1,15 @@
-from core import Color, HashTracker, NodeID, Puzzle
+from core import HashTracker, NodeID, Puzzle
+from color import InfiniteColor
 from search_algs import SearchSolver
 
 # a move sets a node to a color (and propagates to its same-color neighbors)
-Move = tuple[NodeID, Color]
+Move = tuple[NodeID, InfiniteColor]
 
 class SolvablePuzzle(Puzzle):
-    def __init__(self, hasher: HashTracker | None = None, valid_colors: set[Color] | int = 2):
+    def __init__(self, hasher: HashTracker | None = None, valid_colors: set[InfiniteColor] | int = 2):
         super().__init__(hasher=hasher)
         if isinstance(valid_colors, int):
-            valid_colors = {Color(i) for i in range(valid_colors)}
+            valid_colors = {InfiniteColor(i) for i in range(valid_colors)}
         self.valid_colors = valid_colors
 
     def copy(self) -> 'SolvablePuzzle':

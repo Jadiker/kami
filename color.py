@@ -20,3 +20,10 @@ class InfiniteColor(Enum):
             cls._member_map_[name] = member
             return member
         raise ValueError(f"{value!r} is not a valid {cls.__name__}")
+
+if __name__ == "__main__":
+    new_color = InfiniteColor(10)
+    print(new_color)
+    print(type(new_color))
+    print(new_color.name)
+    print(new_color.value)
