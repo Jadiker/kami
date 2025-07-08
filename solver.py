@@ -45,17 +45,16 @@ class SolvablePuzzle(Puzzle):
         new_puzzle.collapse()
         return new_puzzle
 
-    def solve(self) -> list[Move] | None:
+    def solve(self, max_depth: int | None = None, progress: bool = False) -> list[Move] | None:
         solver = SearchSolver(
             namer=self.search_namer,
             detector=self.search_detector,
             expander=self.search_expander,
             follower=self.search_follower,
-            breadth=True
         )
         collapsed_self = self.copy()
         collapsed_self.collapse()
-        return solver.solve(collapsed_self)
+        return solver.solve(collapsed_self, max_depth=max_depth, progress=progress)
     
 if __name__ == '__main__':
     import puzzles
