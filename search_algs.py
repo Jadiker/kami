@@ -53,16 +53,15 @@ class SearchSolver(NodeSolver[GenericInfo, GenericName, GenericMove]):
     def solve(
         self,
         start_info: GenericInfo,
-        max_depth: int | None = None,
         progress: bool = False,
     ) -> Optional[List[GenericMove]]:
         """Solve using BFS and optionally show progress bars."""
         if progress:
-            return self._solve_with_progress(start_info, max_depth)
-        return self._solve_without_progress(start_info, max_depth)
+            return self._solve_with_progress(start_info)
+        return self._solve_without_progress(start_info)
 
     def _solve_without_progress(
-        self, start_info: GenericInfo, max_depth: int | None
+        self, start_info: GenericInfo
     ) -> Optional[List[GenericMove]]:
         """Standard BFS without progress bars."""
         if self.is_goal(start_info):
@@ -79,9 +78,6 @@ class SearchSolver(NodeSolver[GenericInfo, GenericName, GenericMove]):
             current_name = queue.popleft()
             current_info, current_path = name_to_data[current_name]
 
-            if max_depth is not None and len(current_path) >= max_depth:
-                continue
-
             expanded_moves = self.get_moves(current_info)
             for move in expanded_moves:
                 child_info = self.follow_move(current_info, move)
@@ -90,9 +86,6 @@ class SearchSolver(NodeSolver[GenericInfo, GenericName, GenericMove]):
                 if self.is_goal(child_info):
                     return child_path
 
-                if max_depth is not None and len(child_path) >= max_depth:
-                    continue
-
                 child_name = self.get_name(child_info)
                 if child_name not in name_to_data:
                     name_to_data[child_name] = (child_info, child_path)
@@ -100,7 +93,7 @@ class SearchSolver(NodeSolver[GenericInfo, GenericName, GenericMove]):
         return None
 
     def _solve_with_progress(
-        self, start_info: GenericInfo, max_depth: int | None
+        self, start_info: GenericInfo
     ) -> Optional[List[GenericMove]]:
         """BFS with layer-wise tqdm progress bars."""
         if self.is_goal(start_info):
@@ -122,10 +115,6 @@ class SearchSolver(NodeSolver[GenericInfo, GenericName, GenericMove]):
                 current_name = queue.popleft()
                 current_info, current_path = name_to_data[current_name]
 
-                if max_depth is not None and len(current_path) >= max_depth:
-                    bar.update(1)
-                    continue
-
                 moves = list(self.get_moves(current_info))
                 for move in moves:
                     child_info = self.follow_move(current_info, move)
@@ -134,9 +123,6 @@ class SearchSolver(NodeSolver[GenericInfo, GenericName, GenericMove]):
                     if self.is_goal(child_info):
                         bar.close()
                         return child_path
-
-                    if max_depth is not None and len(child_path) >= max_depth:
-                        continue
 
                     child_name = self.get_name(child_info)
                     if child_name not in name_to_data:
