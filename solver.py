@@ -59,14 +59,13 @@ class SolvablePuzzle(Puzzle):
     
 if __name__ == '__main__':
     import puzzles
+    from timer import timing
 
-    puzzle = puzzles.puzzles[puzzles.PuzzleName.puzzle_3_3]
-    puzzle_section_to_name = lambda section: puzzles.Pz_3_3_Section(section).name
+    puzzle = puzzles.puzzles[puzzles.PuzzleName.puzzle_4_6]
+    puzzle_section_to_name = lambda section: puzzles.Pz_4_6_Section(section).name
 
     print("Initial puzzle state:")
     puzzle.display_graph()
-
-    from timer import timing
 
     times = []
 

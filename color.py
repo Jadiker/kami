@@ -6,6 +6,7 @@ class InfiniteColor(Enum):
     DARK_BLUE = 1
     CREAM = 2
     TURQUOISE = 3
+    RED = 4
 
     @classmethod
     def _missing_(cls, value: Any) -> "InfiniteColor":
