@@ -60,6 +60,9 @@ if __name__ == '__main__':
     import puzzles
     from timer import timing
 
+    # puzzle = puzzles.puzzles[puzzles.PuzzleName.puzzle_3_3]
+    # puzzle_section_to_name = lambda section: puzzles.Pz_3_3_Section(section).name
+
     puzzle = puzzles.puzzles[puzzles.PuzzleName.puzzle_4_6]
     puzzle_section_to_name = lambda section: puzzles.Pz_4_6_Section(section).name
 
@@ -70,7 +73,7 @@ if __name__ == '__main__':
 
     print("Solving puzzle...")
     with timing(times):
-        solution = puzzle.solve()
+        solution = puzzle.solve(progress=True)
 
     solve_time = times.pop()
     print(f"Solution found in {solve_time} seconds:")
