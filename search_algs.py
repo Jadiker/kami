@@ -3,6 +3,8 @@
 from collections import deque
 from typing import Callable, Iterable, List, Deque, Tuple, Dict, Optional, Hashable, Generic, TypeVar
 
+from tqdm import tqdm
+
 # Type definitions
 # representation of the state - same states do not need to have the same representation
 GenericInfo = TypeVar('GenericInfo')
@@ -49,22 +51,25 @@ class SearchSolver(NodeSolver[GenericInfo, GenericName, GenericMove]):
 
     '''Class for solving node problems with BFS to reach the goal node.'''
     def solve(
-        self, start_info: GenericInfo, max_depth: int | None = None
+        self,
+        start_info: GenericInfo,
+        max_depth: int | None = None,
+        progress: bool = False,
     ) -> Optional[List[GenericMove]]:
-        '''
-        Return the list of moves required to reach the goal node from
-        ``start_info``.
+        """Solve using BFS and optionally show progress bars."""
+        if progress:
+            return self._solve_with_progress(start_info, max_depth)
+        return self._solve_without_progress(start_info, max_depth)
 
-        When ``max_depth`` is provided, the search stops expanding paths
-        longer than this value and returns ``None`` if no solution is found
-        within the limit.
-        '''
+    def _solve_without_progress(
+        self, start_info: GenericInfo, max_depth: int | None
+    ) -> Optional[List[GenericMove]]:
+        """Standard BFS without progress bars."""
         if self.is_goal(start_info):
             return []
 
         start_name = self.get_name(start_info)
 
-        # data is in the form (info, path)
         name_to_data: Dict[GenericName, Tuple[GenericInfo, List[GenericMove]]] = {
             start_name: (start_info, [])
         }
@@ -75,7 +80,6 @@ class SearchSolver(NodeSolver[GenericInfo, GenericName, GenericMove]):
             current_info, current_path = name_to_data[current_name]
 
             if max_depth is not None and len(current_path) >= max_depth:
-                # Can't expand this node further
                 continue
 
             expanded_moves = self.get_moves(current_info)
@@ -93,4 +97,55 @@ class SearchSolver(NodeSolver[GenericInfo, GenericName, GenericMove]):
                 if child_name not in name_to_data:
                     name_to_data[child_name] = (child_info, child_path)
                     queue.append(child_name)
+        return None
+
+    def _solve_with_progress(
+        self, start_info: GenericInfo, max_depth: int | None
+    ) -> Optional[List[GenericMove]]:
+        """BFS with layer-wise tqdm progress bars."""
+        if self.is_goal(start_info):
+            return []
+
+        start_name = self.get_name(start_info)
+
+        name_to_data: Dict[GenericName, Tuple[GenericInfo, List[GenericMove]]] = {
+            start_name: (start_info, [])
+        }
+        queue: Deque[GenericName] = deque([start_name])
+        depth = 0
+
+        while queue:
+            layer_size = len(queue)
+            bar = tqdm(total=layer_size, desc=f"Depth {depth}", leave=True)
+
+            for _ in range(layer_size):
+                current_name = queue.popleft()
+                current_info, current_path = name_to_data[current_name]
+
+                if max_depth is not None and len(current_path) >= max_depth:
+                    bar.update(1)
+                    continue
+
+                moves = list(self.get_moves(current_info))
+                for move in moves:
+                    child_info = self.follow_move(current_info, move)
+                    child_path = current_path + [move]
+
+                    if self.is_goal(child_info):
+                        bar.close()
+                        return child_path
+
+                    if max_depth is not None and len(child_path) >= max_depth:
+                        continue
+
+                    child_name = self.get_name(child_info)
+                    if child_name not in name_to_data:
+                        name_to_data[child_name] = (child_info, child_path)
+                        queue.append(child_name)
+
+                bar.update(1)
+
+            bar.close()
+            depth += 1
+
         return None
