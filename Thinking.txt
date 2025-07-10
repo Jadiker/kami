@@ -117,3 +117,88 @@ Solution found in 4.623849900002824 seconds:
 4. Set ALL_STRIPE_1 to CREAM
 
 Okay, that's a ridiculous speedup, wow.
+
+
+On those solves it seems to be a lot faster.
+However, on the creator, it seems to be slower, oddly.
+Maybe I should just use the color?
+
+Searching for hardest 5-node puzzle with 5 colors...
+FUZZY=True
+All graphs: 100%|█████████████████████████████████████████████████████████| 1024/1024 [06:28<00:00,  2.64graphs/s]
+Elapsed time: 388.555862 seconds
+Hardest 5-node puzzle with 5 colors uses 4 moves
+Node 0: Color ORANGE, Neighbors [1, 2, 3, 4]
+Node 1: Color DARK_BLUE, Neighbors [0]
+Node 2: Color CREAM, Neighbors [0]
+Node 3: Color TURQUOISE, Neighbors [0]
+Node 4: Color RED, Neighbors [0]
+1. Set node 0 to DARK_BLUE
+2. Set node 2 to TURQUOISE
+3. Set node 4 to TURQUOISE
+4. Set node 0 to TURQUOISE
+
+That was with both heuristics. I'm going to try BFS and see what happens.
+
+Yeah, I have no idea what I did to make that run so fast before. Because BFS is now running even slower than that.
+
+BFS now looks like this:
+Searching for hardest 5-node puzzle with 5 colors...
+FUZZY=True
+All graphs: 100%|██████████████████████████████████████████████████████████| 1024/1024 [06:50<00:00,  2.50graph/s]
+Elapsed time: 410.320283 seconds
+Hardest 5-node puzzle with 5 colors uses 4 moves
+Node 0: Color ORANGE, Neighbors [1, 2, 3, 4]
+Node 1: Color DARK_BLUE, Neighbors [0]
+Node 2: Color CREAM, Neighbors [0]
+Node 3: Color TURQUOISE, Neighbors [0]
+Node 4: Color RED, Neighbors [0]
+1. Set node 0 to RED
+2. Set node 0 to CREAM
+3. Set node 0 to DARK_BLUE
+4. Set node 0 to TURQUOISE
+
+I will say, it's not using the same HashTracker for all of them.
+I might get the speedup from that.
+
+This is with just the color heuristic:
+Searching for hardest 5-node puzzle with 5 colors...
+FUZZY=True
+All graphs: 100%|██████████████████████████████████████████████████████████| 1024/1024 [06:45<00:00,  2.53graph/s]
+Elapsed time: 405.351829 seconds
+Hardest 5-node puzzle with 5 colors uses 4 moves
+Node 0: Color ORANGE, Neighbors [1, 2, 3, 4]
+Node 1: Color DARK_BLUE, Neighbors [0]
+Node 2: Color CREAM, Neighbors [0]
+Node 3: Color TURQUOISE, Neighbors [0]
+Node 4: Color RED, Neighbors [0]
+1. Set node 0 to CREAM
+2. Set node 1 to TURQUOISE
+3. Set node 4 to TURQUOISE
+4. Set node 0 to TURQUOISE
+
+Yeah, because previously switching to fuzzy hashing seemed to do the trick.
+So something with hashing was good.
+
+Oh! It looks like copies were rehashing. I changed the base class's `copy` function to work properly, but `SolvablePuzzle.copy` overrides `Puzzle.copy` and doesn't do it right.
+
+Okay, fixed it. Let's try BFS again.
+I may want to make the hasher the same between them all if I haven't already if this doesn't go well.
+
+Okay, BFS now runs like this:
+Searching for hardest 5-node puzzle with 5 colors...
+FUZZY=True
+All graphs: 100%|██████████████████████████████████████████████████████████| 1024/1024 [06:47<00:00,  2.51graph/s]
+Elapsed time: 407.789244 seconds
+Hardest 5-node puzzle with 5 colors uses 4 moves
+Node 0: Color ORANGE, Neighbors [1, 2, 3, 4]
+Node 1: Color DARK_BLUE, Neighbors [0]
+Node 2: Color CREAM, Neighbors [0]
+Node 3: Color TURQUOISE, Neighbors [0]
+Node 4: Color RED, Neighbors [0]
+1. Set node 0 to RED
+2. Set node 0 to DARK_BLUE
+3. Set node 0 to CREAM
+4. Set node 0 to TURQUOISE
+
+Basically the same time as before, so that wasn't the issue.

@@ -6,7 +6,7 @@ import networkx as nx
 from tqdm import tqdm
 
 from color import InfiniteColor
-from solver import SolvablePuzzle, Move, HashTracker
+from solver import SolvablePuzzle, Move, HeuristicName, HashTracker
 
 
 Coloring = Tuple[InfiniteColor, ...]
@@ -16,7 +16,8 @@ def _all_graphs(n: int) -> Iterable[nx.Graph]:
     """Yield all simple graphs with ``n`` nodes."""
     nodes = list(range(n))
     edges = list(itertools.combinations(nodes, 2))
-    for mask in tqdm(range(1 << len(edges)), desc="All graphs", unit="graphs"):
+    # lower smoothing (EMA) so that time estimates are more accurate throughout jitters
+    for mask in tqdm(range(1 << len(edges)), desc="All graphs", unit="graph", smoothing=0.05):
         g = nx.Graph()
         g.add_nodes_from(nodes)
         for i, (u, v) in enumerate(edges):
@@ -27,12 +28,12 @@ def _all_graphs(n: int) -> Iterable[nx.Graph]:
 
 def _all_colorings(n: int, colors: List[InfiniteColor]) -> Iterable[Coloring]:
     """Yield all assignments of ``colors`` to ``n`` nodes."""
-    for prod in tqdm(itertools.product(colors, repeat=n), desc="All colorings", unit="colorings", total=len(colors)**n, leave=False):
+    for prod in tqdm(itertools.product(colors, repeat=n), desc="All colorings", unit="coloring", total=len(colors)**n, leave=False):
         yield prod
 
 
-def _puzzle_from_graph_and_colors(g: nx.Graph, coloring: Coloring, valid_colors: List[InfiniteColor]) -> SolvablePuzzle:
-    puzzle = SolvablePuzzle(valid_colors=set(valid_colors))
+def _create_puzzle(g: nx.Graph, coloring: Coloring, valid_colors: List[InfiniteColor], hasher: HashTracker) -> SolvablePuzzle:
+    puzzle = SolvablePuzzle(hasher=hasher, valid_colors=set(valid_colors))
     for node, color in enumerate(coloring):
         puzzle.add_node(node, color)
     for u, v in g.edges:
@@ -51,6 +52,7 @@ def hardest_puzzle(n: int, k: int, fuzzy: bool = False) -> tuple[SolvablePuzzle 
     max_moves = -1
     best_puzzle: SolvablePuzzle | None = None
     best_solution: List[Move] | None = None
+    hasher = HashTracker()
     seen = set()
 
     for g in _all_graphs(n):
@@ -60,13 +62,16 @@ def hardest_puzzle(n: int, k: int, fuzzy: bool = False) -> tuple[SolvablePuzzle 
         if not is_planar:
             continue
         for coloring in _all_colorings(n, colors):
-            puzzle = _puzzle_from_graph_and_colors(g, coloring, colors)
+            puzzle = _create_puzzle(g, coloring, colors, hasher)
             if fuzzy:
                 quick_hash = puzzle.quick_hash
                 if quick_hash in seen:
                     continue
                 seen.add(quick_hash)
-            solution = puzzle.solve()
+
+            # solution = puzzle.a_star_solve([HeuristicName.COLOR])
+            solution = puzzle.bfs_solve(progress=False)
+
             if solution is not None and len(solution) > max_moves:
                 max_moves = len(solution)
                 best_puzzle = puzzle

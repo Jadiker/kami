@@ -117,6 +117,12 @@ class SolvablePuzzle(Puzzle):
     def copy(self) -> 'SolvablePuzzle':
         new_puzzle = SolvablePuzzle(hasher=self.hasher, valid_colors=self.valid_colors)
         new_puzzle.graph = self.graph.copy()
+        new_puzzle.recalc_full_hash = self.recalc_full_hash
+        new_puzzle.recalc_quick_hash = self.recalc_quick_hash
+        new_puzzle.not_collapsed = self.not_collapsed
+        new_puzzle._full_hash = self._full_hash
+        new_puzzle._quick_hash = self._quick_hash
+        new_puzzle._iso_graph = self._iso_graph
         return new_puzzle
 
     def get_valid_moves(self) -> list[Move]:
