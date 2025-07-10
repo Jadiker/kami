@@ -52,7 +52,8 @@ def hardest_puzzle(n: int, k: int, fuzzy: bool = False) -> tuple[SolvablePuzzle 
     max_moves = -1
     best_puzzle: SolvablePuzzle | None = None
     best_solution: List[Move] | None = None
-    hasher = HashTracker()
+    hasher = None # each puzzle gets its own hasher
+    # hasher = HashTracker()
     seen = set()
 
     for g in _all_graphs(n):
