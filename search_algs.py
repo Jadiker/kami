@@ -1,7 +1,7 @@
 '''Classes for solving problems that can be modeled as a directed graph with goal nodes'''
 from dataclasses import dataclass
 from collections import deque
-from typing import Callable, Iterable, List, Deque, Tuple, Dict, Optional, Hashable, Generic, TypeVar
+from typing import Callable, Iterable, Deque, Hashable, Generic, TypeVar
 from minheap import HeapItem, MinHeap, GenericScore
 
 from tqdm import tqdm
@@ -55,7 +55,7 @@ class BFSSolver(NodeSolver[GenericInfo, GenericName, GenericMove]):
         self,
         start_info: GenericInfo,
         progress: bool = False,
-    ) -> Optional[List[GenericMove]]:
+    ) -> list[GenericMove] | None:
         """Solve using BFS and optionally show progress bars."""
         if progress:
             return self._solve_with_progress(start_info)
@@ -63,14 +63,14 @@ class BFSSolver(NodeSolver[GenericInfo, GenericName, GenericMove]):
 
     def _solve_without_progress(
         self, start_info: GenericInfo
-    ) -> Optional[List[GenericMove]]:
+    ) -> list[GenericMove] | None:
         """Standard BFS without progress bars."""
         if self.is_goal(start_info):
             return []
 
         start_name = self.get_name(start_info)
 
-        name_to_data: Dict[GenericName, Tuple[GenericInfo, List[GenericMove]]] = {
+        name_to_data: dict[GenericName, tuple[GenericInfo, list[GenericMove]]] = {
             start_name: (start_info, [])
         }
         queue: Deque[GenericName] = deque([start_name])
@@ -95,14 +95,14 @@ class BFSSolver(NodeSolver[GenericInfo, GenericName, GenericMove]):
 
     def _solve_with_progress(
         self, start_info: GenericInfo
-    ) -> Optional[List[GenericMove]]:
+    ) -> list[GenericMove] | None:
         """BFS with layer-wise tqdm progress bars."""
         if self.is_goal(start_info):
             return []
 
         start_name = self.get_name(start_info)
 
-        name_to_data: Dict[GenericName, Tuple[GenericInfo, List[GenericMove]]] = {
+        name_to_data: dict[GenericName, tuple[GenericInfo, list[GenericMove]]] = {
             start_name: (start_info, [])
         }
         queue: Deque[GenericName] = deque([start_name])
@@ -176,13 +176,13 @@ class AStarSolver(
         ] = MinHeap()
 
         # internal tables (allocated per call in `solve`)
-        self._g: Dict[GenericName, GenericScore]                         # cost so far
-        self._parent: Dict[GenericName, Tuple[GenericName, GenericMove]] # back-edges
+        self._g: dict[GenericName, GenericScore]                         # cost so far
+        self._parent: dict[GenericName, tuple[GenericName, GenericMove]] # back-edges
 
     # -----------------------------------------------------------------------
     #  Public entry point
     # -----------------------------------------------------------------------
-    def solve(self, start_info: GenericInfo) -> Optional[List[GenericMove]]:
+    def solve(self, start_info: GenericInfo) -> list[GenericMove] | None:
         """
         Run A* and return the sequence of moves that reaches a goal,
         or None if no solution exists.
@@ -245,8 +245,8 @@ class AStarSolver(
     # -----------------------------------------------------------------------
     #  Helpers
     # -----------------------------------------------------------------------
-    def _reconstruct_path(self, goal_name: GenericName) -> List[GenericMove]:
-        path: List[GenericMove] = []
+    def _reconstruct_path(self, goal_name: GenericName) -> list[GenericMove]:
+        path: list[GenericMove] = []
         parent = self._parent
         cur = goal_name
         while cur in parent:
@@ -254,3 +254,41 @@ class AStarSolver(
             path.append(mv)
         path.reverse()
         return path
+
+
+
+if __name__ == "__main__":
+    # Quick test to ensure that the AStarSolver works
+    
+    # ----------------- problem domain -----------------
+    Coord = tuple[int, int]   # GenericInfo and GenericName are both Coord here
+    Move  = tuple[int, int]   # displacement: (-1,0) etc.
+
+    # valid grid coordinates
+    N = 3
+    def in_bounds(x: int, y: int) -> bool: return 0 <= x < N and 0 <= y < N
+
+    # required callables --------------------------------------------------------
+    namer     = lambda c: c                         # Coord is already hashable
+    detector  = lambda c: c == (2, 2)               # goal
+    expander  = lambda c: [                         # 4-neighbour moves
+        d for d in [(-1,0),(1,0),(0,-1),(0,1)]
+        if in_bounds(c[0]+d[0], c[1]+d[1])
+    ]
+    follower  = lambda c, d: (c[0]+d[0], c[1]+d[1])
+    heuristic = lambda c: abs(2-c[0]) + abs(2-c[1]) # Manhattan h(n)
+    cost_fn   = lambda _, __, ___: 1                # unit-cost edges
+    ZERO      = 0                                   # init GenericScore
+
+    # ----------------- build solver -------------------
+    solver = AStarSolver[Coord, Coord, Move, int](
+        namer, detector, expander, follower,
+        heuristic, cost_fn, ZERO
+    )
+
+    # ----------------- run test -----------------------
+    path: list[Move] | None = solver.solve((0, 0))
+    assert path is not None, "solver failed to find a path"
+    assert len(path) == 4,   f"expected length 4, got {len(path)}"
+    print("Path:", path)
+    print("Test passed ✔")
