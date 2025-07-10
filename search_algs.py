@@ -1,5 +1,5 @@
 '''Classes for solving problems that can be modeled as a directed graph with goal nodes'''
-
+from dataclasses import dataclass
 from collections import deque
 from typing import Callable, Iterable, List, Deque, Tuple, Dict, Optional, Hashable, Generic, TypeVar
 
@@ -39,7 +39,7 @@ class NodeSolver(Generic[GenericInfo, GenericName, GenericMove]):
         self.get_moves = expander
         self.follow_move = follower
 
-class SearchSolver(NodeSolver[GenericInfo, GenericName, GenericMove]):
+class BFSSolver(NodeSolver[GenericInfo, GenericName, GenericMove]):
     def __init__(
         self,
         namer: Callable[[GenericInfo], GenericName],
@@ -135,3 +135,52 @@ class SearchSolver(NodeSolver[GenericInfo, GenericName, GenericMove]):
             depth += 1
 
         return None
+
+class AStarSolver(NodeSolver[GenericInfo, GenericName, GenericMove]):
+    """Class for solving node problems with A* search algorithm."""
+    def __init__(
+        self,
+        namer: Callable[[GenericInfo], GenericName],
+        detector: Callable[[GenericInfo], bool],
+        expander: Callable[[GenericInfo], Iterable[GenericMove]],
+        follower: Callable[[GenericInfo, GenericMove], GenericInfo],
+        heuristic: Callable[[GenericInfo], float]
+    ) -> None:
+        super().__init__(namer, detector, expander, follower)
+        self.heuristic = heuristic
+
+    def solve(
+        self,
+        start_info: GenericInfo,
+    ) -> Optional[List[GenericMove]]:
+        """Solve using A* search algorithm."""
+        visited: dict[GenericName, Tuple[float, List[GenericMove]]] = {}
+
+@dataclass
+class OpenSetNode(Generic[GenericInfo, GenericName, GenericMove]):
+    name: GenericName
+    score: float
+    info: GenericInfo
+    path: list[GenericMove]
+    less_or_equal: "OpenSetNode | None"
+    greater: "OpenSetNode | None"
+
+class OpenSet(Generic[GenericInfo, GenericName, GenericMove]):
+    def __init__(self, values: Iterable[OpenSetNode[GenericInfo, GenericName, GenericMove]]):
+        self.root = None
+        for value in values:
+            if self.root is None:
+                self.root = value
+                continue
+            else:
+                self.add_or_update(value)
+
+    def add_or_update(
+            self,
+            value: OpenSetNode[GenericInfo, GenericName, GenericMove],
+            at: OpenSetNode[GenericInfo, GenericName, GenericMove] | None
+        ):
+        if at is None:
+            at = self.root
+        
+        

@@ -1,6 +1,6 @@
 from core import HashTracker, NodeID, Puzzle
 from color import InfiniteColor
-from search_algs import SearchSolver
+from search_algs import BFSSolver
 
 # a move sets a node to a color (and propagates to its same-color neighbors)
 Move = tuple[NodeID, InfiniteColor]
@@ -46,7 +46,7 @@ class SolvablePuzzle(Puzzle):
         return new_puzzle
 
     def solve(self, progress: bool = False) -> list[Move] | None:
-        solver = SearchSolver(
+        solver = BFSSolver(
             namer=self.search_namer,
             detector=self.search_detector,
             expander=self.search_expander,
