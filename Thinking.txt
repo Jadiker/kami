@@ -220,3 +220,62 @@ Node 4: Color RED, Neighbors [0]
 4. Set node 0 to RED
 
 That's one of the worst runs.
+
+Oh! It went so much faster because I was actually only using 4 colors.
+So it actually ended up with the incorrect answer and took a much shorter time.
+
+So I should compare to 5 nodes 4 colors now.
+
+I'm gonna do just max edge heuristic and see how it goes.
+
+Okay, the time I was trying to beat was Elapsed time: 129.653509 seconds
+
+I got:
+Elapsed time: 123.693212 seconds
+Hardest 5-node puzzle with 4 colors uses 3 moves
+Node 0: Color ORANGE, Neighbors [1, 2, 3, 4]
+Node 1: Color ORANGE, Neighbors [0]
+Node 2: Color DARK_BLUE, Neighbors [0]
+Node 3: Color CREAM, Neighbors [0]
+Node 4: Color TURQUOISE, Neighbors [0]
+1. Set node 0 to TURQUOISE
+2. Set node 2 to CREAM
+3. Set node 0 to CREAM
+PS C:\Users\happy\Desktop\PythonPro
+
+Nice! Let's try both heuristics.
+
+All graphs: 100%|██████████████████████████████████████████████████████████| 1024/1024 [02:09<00:00,  7.90graph/s]
+Elapsed time: 129.678219 seconds
+Hardest 5-node puzzle with 4 colors uses 3 moves
+Node 0: Color ORANGE, Neighbors [1, 2, 3, 4]
+Node 1: Color ORANGE, Neighbors [0]
+Node 2: Color DARK_BLUE, Neighbors [0]
+Node 3: Color CREAM, Neighbors [0]
+Node 4: Color TURQUOISE, Neighbors [0]
+1. Set node 0 to TURQUOISE
+2. Set node 2 to CREAM
+3. Set node 0 to CREAM
+
+Okay, so that took a little longer than the target time.
+
+So then let's just do color.
+
+Searching for hardest 5-node puzzle with 4 colors...
+FUZZY=True
+All graphs: 100%|██████████████████████████████████████████████████████████| 1024/1024 [02:12<00:00,  7.72graph/s]
+Elapsed time: 132.709575 seconds
+Hardest 5-node puzzle with 4 colors uses 3 moves
+Node 0: Color ORANGE, Neighbors [1, 2, 3, 4]
+Node 1: Color ORANGE, Neighbors [0]
+Node 2: Color DARK_BLUE, Neighbors [0]
+Node 3: Color CREAM, Neighbors [0]
+Node 4: Color TURQUOISE, Neighbors [0]
+1. Set node 0 to TURQUOISE
+2. Set node 2 to CREAM
+3. Set node 0 to CREAM
+
+Surprisingly it actually did the worst. Hm. Guess the gain from the other one was worth it. Surprising!
+I wonder if I added in the third heuristic how it would perform.
+
+Going to set it back to the best peforming one.

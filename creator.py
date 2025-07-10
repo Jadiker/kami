@@ -70,8 +70,10 @@ def hardest_puzzle(n: int, k: int, fuzzy: bool = False) -> tuple[SolvablePuzzle 
                     continue
                 seen.add(quick_hash)
 
+            # solution = puzzle.a_star_solve([heuristic for heuristic in HeuristicName])
             # solution = puzzle.a_star_solve([HeuristicName.COLOR])
-            solution = puzzle.bfs_solve(progress=False)
+            solution = puzzle.a_star_solve([HeuristicName.MAX_EDGE_REDUCTION])
+            # solution = puzzle.bfs_solve(progress=False)
 
             if solution is not None and len(solution) > max_moves:
                 max_moves = len(solution)
@@ -83,15 +85,15 @@ def hardest_puzzle(n: int, k: int, fuzzy: bool = False) -> tuple[SolvablePuzzle 
 
 if __name__ == "__main__":
     from timer import timing
-    N = 5
-    K = 5
+    n_nodes = 5
+    n_colors = 4
     FUZZY = True
-    assert 1 <= K <= N, f"Must have 1  <=  {K=}  <=  {N=}"
-    print(f"Searching for hardest {N}-node puzzle with {K} colors...")
+    assert 1 <= n_colors <= n_nodes, f"Must have 1  <=  {n_colors=}  <=  {n_nodes=}"
+    print(f"Searching for hardest {n_nodes}-node puzzle with {n_colors} colors...")
     print(f"{FUZZY=}")
     with timing():
-        puzzle, solution = hardest_puzzle(N, K, fuzzy=FUZZY)
-    print(f"Hardest {N}-node puzzle with {K} colors uses {len(solution) if solution else 'no'} moves")
+        puzzle, solution = hardest_puzzle(n_nodes, n_colors, fuzzy=FUZZY)
+    print(f"Hardest {n_nodes}-node puzzle with {n_colors} colors uses {len(solution) if solution else 'no'} moves")
     if puzzle is not None and solution is not None:
         puzzle.display_graph()
         for idx, move in enumerate(solution, 1):
