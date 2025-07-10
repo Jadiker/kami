@@ -108,3 +108,12 @@ Solution found in 56.08667830002378 seconds:
 Total moves: 4
 
 That's just with the color heuristic.
+
+Using a_star_heuristics=[<HeuristicName.COLOR: 'color'>, <HeuristicName.MAX_EDGE_REDUCTION: 'max edge reduction'>]
+Solution found in 4.623849900002824 seconds:
+1. Set ALL_STRIPE_3 to RED
+2. Set LEFT_STRIPE_4 to RED
+3. Set LEFT_STRIPE_2 to DARK_BLUE
+4. Set ALL_STRIPE_1 to CREAM
+
+Okay, that's a ridiculous speedup, wow.
