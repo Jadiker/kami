@@ -1,9 +1,15 @@
+from enum import Enum, auto
+
 from core import HashTracker, NodeID, Puzzle
 from color import InfiniteColor
-from search_algs import BFSSolver
+from search_algs import BFSSolver, AStarSolver
 
 # a move sets a node to a color (and propagates to its same-color neighbors)
 Move = tuple[NodeID, InfiniteColor]
+
+class SolverType(Enum):
+    BFS = auto()
+    A_STAR = auto()
 
 class SolvablePuzzle(Puzzle):
     def __init__(self, hasher: HashTracker | None = None, valid_colors: set[InfiniteColor] | int = 2):
@@ -38,6 +44,16 @@ class SolvablePuzzle(Puzzle):
         return puzzle.get_valid_moves()
     
     @classmethod
+    def search_heuristic(cls, puzzle: 'SolvablePuzzle') -> int:
+        # The heuristic is the number of edges remaining in the puzzle
+        return puzzle.graph.number_of_edges()
+    
+    @classmethod
+    def search_cost(cls, puzzle1: 'SolvablePuzzle', move: Move, puzzle2: 'SolvablePuzzle') -> int:
+        # The cost of a move is always 1, a better solution is one with less moves.
+        return 1
+    
+    @classmethod
     def search_follower(cls, puzzle: 'SolvablePuzzle', move: Move) -> 'SolvablePuzzle':
         node, color = move
         new_puzzle = puzzle.copy()
@@ -45,16 +61,32 @@ class SolvablePuzzle(Puzzle):
         new_puzzle.collapse()
         return new_puzzle
 
-    def solve(self, progress: bool = False) -> list[Move] | None:
-        solver = BFSSolver(
-            namer=self.search_namer,
-            detector=self.search_detector,
-            expander=self.search_expander,
-            follower=self.search_follower,
-        )
+    def solve(self, solver_type: SolverType, progress: bool = False) -> list[Move] | None:
         collapsed_self = self.copy()
         collapsed_self.collapse()
-        return solver.solve(collapsed_self, progress=progress)
+        if solver_type is SolverType.BFS:
+            solver = BFSSolver(
+                namer=self.search_namer,
+                detector=self.search_detector,
+                expander=self.search_expander,
+                follower=self.search_follower,
+            )
+            return solver.solve(collapsed_self, progress=progress)
+        else:
+            if progress:
+                raise NotImplementedError("A* solver does not support progress reporting.")
+            
+            solver = AStarSolver(
+                namer=self.search_namer,
+                detector=self.search_detector,
+                expander=self.search_expander,
+                follower=self.search_follower,
+                heuristic=self.search_heuristic,
+                cost=self.search_cost,
+                init_cost=0
+            )
+
+
     
 if __name__ == '__main__':
     import puzzles
@@ -73,7 +105,7 @@ if __name__ == '__main__':
 
     print("Solving puzzle...")
     with timing(times):
-        solution = puzzle.solve(progress=True)
+        solution = puzzle.solve(SolverType.A_STAR, progress=False)
 
     solve_time = times.pop()
     print(f"Solution found in {solve_time} seconds:")

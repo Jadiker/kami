@@ -8,8 +8,8 @@ from typing import (
 # ────────────────────────────
 #  Generic parameters
 # ────────────────────────────
-GenericName  = TypeVar("GenericName", bound=Hashable)     # unique key
-GenericScore = TypeVar("GenericScore", bound="Comparable")  # totally ordered
+GenericName  = TypeVar("GenericName", bound=Hashable)              # unique key
+GenericCost = TypeVar("GenericCost", bound="AddableComparable")  # ordered and can add
 
 # ────────────────────────────
 #  Minimal contract for something you can sort and add.
@@ -20,17 +20,17 @@ class AddableComparable(Protocol):
     def __add__(self, other: Self, /) -> Self: ...  # closed under +
 
 @runtime_checkable
-class HeapItem(Protocol[GenericName, GenericScore]):
+class HeapItem(Protocol[GenericName, GenericCost]):
     name: GenericName
-    score: GenericScore
+    cost: GenericCost
 
 ItemT = TypeVar("ItemT", bound=HeapItem[Any, Any])
 
 # ────────────────────────────
 #  Min-heap implementation
 # ────────────────────────────
-class MinHeap(Generic[GenericName, GenericScore, ItemT]):
-    """Array-backed min-heap keyed by .score and addressed by .name."""
+class MinHeap(Generic[GenericName, GenericCost, ItemT]):
+    """Array-backed min-heap keyed by .cost and addressed by .name."""
 
     __slots__ = ("_heap", "_pos")
 
@@ -56,9 +56,9 @@ class MinHeap(Generic[GenericName, GenericScore, ItemT]):
         else:                                 # update existing
             old = self._heap[idx]
             self._heap[idx] = obj
-            if obj.score < old.score:
+            if obj.cost < old.cost:
                 self._sift_up(idx)
-            elif obj.score > old.score:
+            elif obj.cost > old.cost:
                 self._sift_down(idx)
 
     def pop(self) -> ItemT:
@@ -89,7 +89,7 @@ class MinHeap(Generic[GenericName, GenericScore, ItemT]):
         item = heap[idx]
         while idx:
             parent = (idx - 1) >> 1
-            if item.score >= heap[parent].score:
+            if item.cost >= heap[parent].cost:
                 break
             heap[idx] = heap[parent]
             pos[heap[parent].name] = idx
@@ -106,8 +106,8 @@ class MinHeap(Generic[GenericName, GenericScore, ItemT]):
             if left >= size:
                 break
             right = left + 1
-            smaller = right if right < size and heap[right].score < heap[left].score else left
-            if heap[smaller].score >= item.score:
+            smaller = right if right < size and heap[right].cost < heap[left].cost else left
+            if heap[smaller].cost >= item.cost:
                 break
             heap[idx] = heap[smaller]
             pos[heap[smaller].name] = idx

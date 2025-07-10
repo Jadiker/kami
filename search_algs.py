@@ -2,7 +2,7 @@
 from dataclasses import dataclass
 from collections import deque
 from typing import Callable, Iterable, Deque, Hashable, Generic, TypeVar
-from minheap import HeapItem, MinHeap, GenericScore
+from minheap import HeapItem, MinHeap, GenericCost
 
 from tqdm import tqdm
 
@@ -139,11 +139,11 @@ class BFSSolver(NodeSolver[GenericInfo, GenericName, GenericMove]):
 
 @dataclass
 class SolutionHeapItem(
-    HeapItem[GenericName, GenericScore],
-    Generic[GenericName, GenericScore, GenericInfo]
+    HeapItem[GenericName, GenericCost],
+    Generic[GenericName, GenericCost, GenericInfo]
     ):
     name: GenericName
-    score: GenericScore
+    cost: GenericCost
     info: GenericInfo
 
 # ---------------------------------------------------------------------------
@@ -151,7 +151,7 @@ class SolutionHeapItem(
 # ---------------------------------------------------------------------------
 class AStarSolver(
     NodeSolver[GenericInfo, GenericName, GenericMove],
-    Generic[GenericInfo, GenericName, GenericMove, GenericScore]
+    Generic[GenericInfo, GenericName, GenericMove, GenericCost]
 ):
     """Extremely efficient A* (min-heap, O(E log V))."""
 
@@ -161,22 +161,22 @@ class AStarSolver(
         detector:   Callable[[GenericInfo], bool],
         expander:   Callable[[GenericInfo], Iterable[GenericMove]],
         follower:   Callable[[GenericInfo, GenericMove], GenericInfo],
-        heuristic:  Callable[[GenericInfo], GenericScore],
-        cost: Callable[[GenericInfo, GenericMove, GenericInfo], GenericScore],
-        init_generic_score: GenericScore
+        heuristic:  Callable[[GenericInfo], GenericCost],
+        cost: Callable[[GenericInfo, GenericMove, GenericInfo], GenericCost],
+        init_cost: GenericCost # initial cost for the start node (usually 0)
     ) -> None:
         super().__init__(namer, detector, expander, follower)
         self.heuristic = heuristic
         self.cost = cost
-        self.init_generic_score = init_generic_score
+        self.init_cost = init_cost
         self.heap: MinHeap[
-            GenericName, GenericScore,
-            SolutionHeapItem[GenericName, GenericScore,
+            GenericName, GenericCost,
+            SolutionHeapItem[GenericName, GenericCost,
                              GenericInfo]
         ] = MinHeap()
 
         # internal tables (allocated per call in `solve`)
-        self._g: dict[GenericName, GenericScore]                         # cost so far
+        self._g: dict[GenericName, GenericCost]                         # cost so far
         self._parent: dict[GenericName, tuple[GenericName, GenericMove]] # back-edges
 
     # -----------------------------------------------------------------------
@@ -194,13 +194,13 @@ class AStarSolver(
 
         # ── initialise ────────────────────────────────────────────────────
         start_name: GenericName = namer(start_info)
-        self._g = {start_name: self.init_generic_score}
+        self._g = {start_name: self.init_cost}
         self._parent = {}
 
-        f_start: GenericScore = self._g[start_name] + heuristic(start_info)
+        f_start: GenericCost = self._g[start_name] + heuristic(start_info)
         heap.add_or_update(SolutionHeapItem(
             name=start_name,
-            score=f_start,
+            cost=f_start,
             info=start_info,
         ))
 
@@ -215,7 +215,7 @@ class AStarSolver(
                 return self._reconstruct_path(name)
 
             closed.add(name)
-            g_curr: GenericScore = self._g[name]
+            g_curr: GenericCost = self._g[name]
 
             for move in expander(node.info):
                 nxt_info  = follower(node.info, move)
@@ -223,8 +223,8 @@ class AStarSolver(
                 if nxt_name in closed:
                     continue
 
-                edge_cost: GenericScore = cost_fn(node.info, move, nxt_info)
-                tentative_g: GenericScore = g_curr + edge_cost
+                edge_cost: GenericCost = cost_fn(node.info, move, nxt_info)
+                tentative_g: GenericCost = g_curr + edge_cost
 
                 better_path = (
                     nxt_name not in self._g or tentative_g < self._g[nxt_name]
@@ -233,10 +233,10 @@ class AStarSolver(
                     self._g[nxt_name] = tentative_g
                     self._parent[nxt_name] = (name, move)
 
-                    f: GenericScore = tentative_g + heuristic(nxt_info)
+                    f: GenericCost = tentative_g + heuristic(nxt_info)
                     heap.add_or_update(SolutionHeapItem(
                         name=nxt_name,
-                        score=f,
+                        cost=f,
                         info=nxt_info,
                     ))
 
@@ -259,7 +259,7 @@ class AStarSolver(
 
 if __name__ == "__main__":
     # Quick test to ensure that the AStarSolver works
-    
+
     # ----------------- problem domain -----------------
     Coord = tuple[int, int]   # GenericInfo and GenericName are both Coord here
     Move  = tuple[int, int]   # displacement: (-1,0) etc.
@@ -278,7 +278,7 @@ if __name__ == "__main__":
     follower  = lambda c, d: (c[0]+d[0], c[1]+d[1])
     heuristic = lambda c: abs(2-c[0]) + abs(2-c[1]) # Manhattan h(n)
     cost_fn   = lambda _, __, ___: 1                # unit-cost edges
-    ZERO      = 0                                   # init GenericScore
+    ZERO      = 0                                   # init GenericCost
 
     # ----------------- build solver -------------------
     solver = AStarSolver[Coord, Coord, Move, int](
