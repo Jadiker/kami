@@ -2,6 +2,7 @@
 from dataclasses import dataclass
 from collections import deque
 from typing import Callable, Iterable, List, Deque, Tuple, Dict, Optional, Hashable, Generic, TypeVar
+from minheap import HeapItem, MinHeap, GenericScore
 
 from tqdm import tqdm
 
@@ -136,51 +137,120 @@ class BFSSolver(NodeSolver[GenericInfo, GenericName, GenericMove]):
 
         return None
 
-class AStarSolver(NodeSolver[GenericInfo, GenericName, GenericMove]):
-    """Class for solving node problems with A* search algorithm."""
+@dataclass
+class SolutionHeapItem(
+    HeapItem[GenericName, GenericScore],
+    Generic[GenericName, GenericScore, GenericInfo]
+    ):
+    name: GenericName
+    score: GenericScore
+    info: GenericInfo
+
+# ---------------------------------------------------------------------------
+#  Fast A* searcher
+# ---------------------------------------------------------------------------
+class AStarSolver(
+    NodeSolver[GenericInfo, GenericName, GenericMove],
+    Generic[GenericInfo, GenericName, GenericMove, GenericScore]
+):
+    """Extremely efficient A* (min-heap, O(E log V))."""
+
     def __init__(
         self,
-        namer: Callable[[GenericInfo], GenericName],
-        detector: Callable[[GenericInfo], bool],
-        expander: Callable[[GenericInfo], Iterable[GenericMove]],
-        follower: Callable[[GenericInfo, GenericMove], GenericInfo],
-        heuristic: Callable[[GenericInfo], float]
+        namer:      Callable[[GenericInfo], GenericName],
+        detector:   Callable[[GenericInfo], bool],
+        expander:   Callable[[GenericInfo], Iterable[GenericMove]],
+        follower:   Callable[[GenericInfo, GenericMove], GenericInfo],
+        heuristic:  Callable[[GenericInfo], GenericScore],
+        cost: Callable[[GenericInfo, GenericMove, GenericInfo], GenericScore],
+        init_generic_score: GenericScore
     ) -> None:
         super().__init__(namer, detector, expander, follower)
         self.heuristic = heuristic
+        self.cost = cost
+        self.init_generic_score = init_generic_score
+        self.heap: MinHeap[
+            GenericName, GenericScore,
+            SolutionHeapItem[GenericName, GenericScore,
+                             GenericInfo]
+        ] = MinHeap()
 
-    def solve(
-        self,
-        start_info: GenericInfo,
-    ) -> Optional[List[GenericMove]]:
-        """Solve using A* search algorithm."""
-        visited: dict[GenericName, Tuple[float, List[GenericMove]]] = {}
+        # internal tables (allocated per call in `solve`)
+        self._g: Dict[GenericName, GenericScore]                         # cost so far
+        self._parent: Dict[GenericName, Tuple[GenericName, GenericMove]] # back-edges
 
-@dataclass
-class OpenSetNode(Generic[GenericInfo, GenericName, GenericMove]):
-    name: GenericName
-    score: float
-    info: GenericInfo
-    path: list[GenericMove]
-    less_or_equal: "OpenSetNode | None"
-    greater: "OpenSetNode | None"
+    # -----------------------------------------------------------------------
+    #  Public entry point
+    # -----------------------------------------------------------------------
+    def solve(self, start_info: GenericInfo) -> Optional[List[GenericMove]]:
+        """
+        Run A* and return the sequence of moves that reaches a goal,
+        or None if no solution exists.
+        """
+        namer, detector = self.get_name, self.is_goal
+        expander, follower = self.get_moves, self.follow_move
+        heuristic, cost_fn = self.heuristic, self.cost
+        heap = self.heap
 
-class OpenSet(Generic[GenericInfo, GenericName, GenericMove]):
-    def __init__(self, values: Iterable[OpenSetNode[GenericInfo, GenericName, GenericMove]]):
-        self.root = None
-        for value in values:
-            if self.root is None:
-                self.root = value
-                continue
-            else:
-                self.add_or_update(value)
+        # ── initialise ────────────────────────────────────────────────────
+        start_name: GenericName = namer(start_info)
+        self._g = {start_name: self.init_generic_score}
+        self._parent = {}
 
-    def add_or_update(
-            self,
-            value: OpenSetNode[GenericInfo, GenericName, GenericMove],
-            at: OpenSetNode[GenericInfo, GenericName, GenericMove] | None
-        ):
-        if at is None:
-            at = self.root
-        
-        
+        f_start: GenericScore = self._g[start_name] + heuristic(start_info)
+        heap.add_or_update(SolutionHeapItem(
+            name=start_name,
+            score=f_start,
+            info=start_info,
+        ))
+
+        closed: set[GenericName] = set()
+
+        # ── main loop ─────────────────────────────────────────────────────
+        while heap:
+            node = heap.pop()                 # node with smallest f
+            name = node.name
+
+            if detector(node.info):           # goal reached
+                return self._reconstruct_path(name)
+
+            closed.add(name)
+            g_curr: GenericScore = self._g[name]
+
+            for move in expander(node.info):
+                nxt_info  = follower(node.info, move)
+                nxt_name  = namer(nxt_info)
+                if nxt_name in closed:
+                    continue
+
+                edge_cost: GenericScore = cost_fn(node.info, move, nxt_info)
+                tentative_g: GenericScore = g_curr + edge_cost
+
+                better_path = (
+                    nxt_name not in self._g or tentative_g < self._g[nxt_name]
+                )
+                if better_path:
+                    self._g[nxt_name] = tentative_g
+                    self._parent[nxt_name] = (name, move)
+
+                    f: GenericScore = tentative_g + heuristic(nxt_info)
+                    heap.add_or_update(SolutionHeapItem(
+                        name=nxt_name,
+                        score=f,
+                        info=nxt_info,
+                    ))
+
+        return None  # frontier exhausted, no goal found
+
+    # -----------------------------------------------------------------------
+    #  Helpers
+    # -----------------------------------------------------------------------
+    def _reconstruct_path(self, goal_name: GenericName) -> List[GenericMove]:
+        path: List[GenericMove] = []
+        parent = self._parent
+        cur = goal_name
+        while cur in parent:
+            cur, mv = parent[cur]
+            path.append(mv)
+        path.reverse()
+        return path
