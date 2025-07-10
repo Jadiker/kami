@@ -32,7 +32,7 @@ def _all_colorings(n: int, colors: List[InfiniteColor]) -> Iterable[Coloring]:
         yield prod
 
 
-def _create_puzzle(g: nx.Graph, coloring: Coloring, valid_colors: List[InfiniteColor], hasher: HashTracker) -> SolvablePuzzle:
+def _create_puzzle(g: nx.Graph, coloring: Coloring, valid_colors: List[InfiniteColor], hasher: HashTracker | None) -> SolvablePuzzle:
     puzzle = SolvablePuzzle(hasher=hasher, valid_colors=set(valid_colors))
     for node, color in enumerate(coloring):
         puzzle.add_node(node, color)
