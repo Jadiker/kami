@@ -1,101 +1,141 @@
 from __future__ import annotations
-from typing import List, Dict, Optional
 
-class MaxHeap:
+from typing import (
+    Protocol,
+    TypeVar,
+    Generic,
+    Iterable,
+    List,
+    Dict,
+    Optional,
+    runtime_checkable,
+)
+
+# ────────────────────────────────────────────────────────────
+#  Interface required of heap elements
+# ────────────────────────────────────────────────────────────
+
+@runtime_checkable
+class HeapItem(Protocol):
     """
-    Max-heap keyed by an object's .score (higher is better) and
-    identified uniquely by .name.  Requires every element to expose:
-        • .score  (numeric, used for ordering)
-        • .name   (hashable, unique)
+    Minimal contract for objects stored in MaxHeap.
+    • .name  must be a unique, hashable identifier.
+    • .score must be a numeric value (higher = better).
     """
+    name: str
+    score: float
 
-    __slots__ = ("_heap", "_pos")   # save memory; prevents __dict__ creation
 
-    def __init__(self, items: Optional[List] = None) -> None:
-        self._heap: List = []
-        self._pos: Dict[str, int] = {}      # name -> index
+T = TypeVar("T", bound=HeapItem)
+
+# ────────────────────────────────────────────────────────────
+#  The heap itself
+# ────────────────────────────────────────────────────────────
+
+
+class MaxHeap(Generic[T]):
+    """Array-backed max-heap keyed by .score and addressed by .name."""
+
+    __slots__ = ("_heap", "_pos")
+
+    # ───── construction ─────
+    def __init__(self, items: Optional[Iterable[T]] = None) -> None:
+        self._heap: List[T] = []
+        self._pos: Dict[str, int] = {}  # maps .name → index in _heap
+
         if items:
+            # Load in O(n) and heapify bottom-up
             for obj in items:
+                self._pos[obj.name] = len(self._heap)
                 self._heap.append(obj)
-                self._pos[obj.name] = len(self._heap) - 1
-            # heapify bottom-up in place
+
             for i in reversed(range(len(self._heap) // 2)):
                 self._sift_down(i)
 
-    # ─────────── user-facing API ───────────
-
-    def add_or_update(self, obj) -> None:
+    # ───── public API ─────
+    def add_or_update(self, obj: T) -> None:
         """
-        Insert a new element or update an existing one
-        (if another object with the same .name already exists).
+        Insert *obj* or, if another element with the same .name is present,
+        replace and restore order in O(log n).
         """
-        idx = self._pos.get(obj.name)
-        if idx is None:                 # ⇒ true insert
+        idx: Optional[int] = self._pos.get(obj.name)
+        if idx is None:  # true insert
+            self._pos[obj.name] = len(self._heap)
             self._heap.append(obj)
-            idx = len(self._heap) - 1
-            self._pos[obj.name] = idx
-            self._sift_up(idx)
-        else:                           # ⇒ update existing
-            old_obj = self._heap[idx]
-            self._heap[idx] = obj       # replace
-            # decide which direction to restore heap property
-            if obj.score > old_obj.score:
+            self._sift_up(len(self._heap) - 1)
+        else:  # update in place
+            old = self._heap[idx]
+            self._heap[idx] = obj
+            if obj.score > old.score:
                 self._sift_up(idx)
-            elif obj.score < old_obj.score:
+            elif obj.score < old.score:
                 self._sift_down(idx)
-            # if equal: nothing to do
 
-    def pop(self):
-        """Remove and return the max-score element.  Raises IndexError if empty."""
+    def pop(self) -> T:
+        """Remove and return the element with the highest score (O(log n))."""
         if not self._heap:
             raise IndexError("pop from empty heap")
-        top = self._heap[0]
-        last = self._heap.pop()
+
+        top: T = self._heap[0]
+        last: T = self._heap.pop()
         del self._pos[top.name]
-        if self._heap:                  # move last to root and fix
+
+        if self._heap:
             self._heap[0] = last
             self._pos[last.name] = 0
             self._sift_down(0)
+
         return top
 
-    def __len__(self) -> int:
-        return len(self._heap)
-
-    def peek(self):
-        """Read-only access to current max element (or None if empty)."""
+    def peek(self) -> Optional[T]:
+        """Read-only access to the current max element (or None if empty)."""
         return self._heap[0] if self._heap else None
 
-    # ─────────── internal helpers ───────────
+    # Pythonic helpers
+    def __len__(self) -> int:  # len(heap)
+        return len(self._heap)
 
-    def _sift_up(self, i: int) -> None:
+    def __bool__(self) -> bool:  # bool(heap)
+        return bool(self._heap)
+
+    def __iter__(self):  # iterate raw heap order
+        return iter(self._heap)
+
+    # ───── internal machinery ─────
+    def _sift_up(self, idx: int) -> None:
         heap, pos = self._heap, self._pos
-        item = heap[i]
-        while i:
-            parent = (i - 1) >> 1
+        item: T = heap[idx]
+
+        while idx:
+            parent = (idx - 1) >> 1
             if item.score <= heap[parent].score:
                 break
-            heap[i] = heap[parent]
-            pos[heap[parent].name] = i
-            i = parent
-        heap[i] = item
-        pos[item.name] = i
+            heap[idx] = heap[parent]
+            pos[heap[parent].name] = idx
+            idx = parent
 
-    def _sift_down(self, i: int) -> None:
+        heap[idx] = item
+        pos[item.name] = idx
+
+    def _sift_down(self, idx: int) -> None:
         heap, pos = self._heap, self._pos
         size = len(heap)
-        item = heap[i]
+        item: T = heap[idx]
+
         while True:
-            left = (i << 1) + 1
+            left = (idx << 1) + 1
             if left >= size:
                 break
+
             right = left + 1
-            larger = left
-            if right < size and heap[right].score > heap[left].score:
-                larger = right
+            larger = right if right < size and heap[right].score > heap[left].score else left
+
             if heap[larger].score <= item.score:
                 break
-            heap[i] = heap[larger]
-            pos[heap[larger].name] = i
-            i = larger
-        heap[i] = item
-        pos[item.name] = i
+
+            heap[idx] = heap[larger]
+            pos[heap[larger].name] = idx
+            idx = larger
+
+        heap[idx] = item
+        pos[item.name] = idx
