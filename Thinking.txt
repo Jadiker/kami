@@ -85,3 +85,26 @@ Node 4: Color TURQUOISE, Neighbors [0]
 3. Set node 0 to CREAM
 
 Yeah, that's a lot better, wow.
+
+# 7/10/2025
+A* is a great speedup:
+Solving puzzle using breadth first search...
+Depth 0: 100%|██████████████████████████████████████████████████████████████████████| 1/1 [00:00<00:00, 13.88it/s]
+Depth 1: 100%|████████████████████████████████████████████████████████████████████| 31/31 [00:04<00:00,  7.33it/s] 
+Depth 2: 100%|██████████████████████████████████████████████████████████████████| 427/427 [00:48<00:00,  8.83it/s] 
+Depth 3:  37%|███████████████████████▍                                        | 1244/3388 [03:02<05:13,  6.83it/s] 
+Solution found in 234.9412288000167 seconds:
+1. Set ALL_STRIPE_3 to RED
+2. Set LEFT_STRIPE_4 to RED
+3. Set LEFT_STRIPE_2 to DARK_BLUE
+4. Set ALL_STRIPE_1 to CREAM
+Total moves: 4
+Solving puzzle using A* search...
+Solution found in 56.08667830002378 seconds:
+1. Set LEFT_STRIPE_4 to CREAM
+2. Set ALL_STRIPE_3 to RED
+3. Set LEFT_STRIPE_2 to DARK_BLUE
+4. Set ALL_STRIPE_1 to CREAM
+Total moves: 4
+
+That's just with the color heuristic.

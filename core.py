@@ -252,9 +252,15 @@ class Puzzle:
         return G
 
     def copy(self) -> "Puzzle":
-        new_puzzle = Puzzle()
+        new_puzzle = Puzzle(self.hasher)
         # don't need deep copy since there are no nested structures
         new_puzzle.graph = self.graph.copy()
+        new_puzzle.recalc_full_hash = self.recalc_full_hash
+        new_puzzle.recalc_quick_hash = self.recalc_quick_hash
+        new_puzzle.not_collapsed = self.not_collapsed
+        new_puzzle._full_hash = self._full_hash
+        new_puzzle._quick_hash = self._quick_hash
+        new_puzzle._iso_graph = self._iso_graph
         return new_puzzle
 
     def display_graph(self):
@@ -262,6 +268,9 @@ class Puzzle:
             color = self.get_color(node)
             neighbors = self.get_neighbors(node)
             print(f'Node {node}: Color {color.name}, Neighbors {neighbors}')
+
+    def __str__(self) -> str:
+        return f'Puzzle(FullHash={self.full_hash}, QuickHash={self.quick_hash}, Nodes={self.graph.nodes(data=True)}, Edges={self.graph.edges})'
     
 
 
